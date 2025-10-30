@@ -1,0 +1,152 @@
+.home-container {
+    width: 100%;
+    max-width: 600px;
+    /* O conteúdo não vai esticar além de 600px */
+    margin: 0 auto;
+    /* Centraliza o container na página */
+}
+
+/* Bloco 1: Cabeçalho */
+.welcome-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.welcome-header h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+}
+
+.welcome-header p {
+    color: #a0a0a0;
+    font-size: 1rem;
+}
+
+/* Estilo Base para os Cards */
+.card {
+    background-color: #252525;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Bloco 2: Card de Saldo */
+.balance-card {
+    background-color: #1c1c1c;
+    border: 1px solid #333;
+}
+
+.balance-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 1rem 0;
+}
+
+.add-saldo-button {
+    width: 100%;
+    padding: 1rem;
+    background-color: #ffcd32;
+    color: #1A1A1A;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Bloco 3: Card de Atraso */
+.late-card {
+    background-color: rgba(255, 0, 0, 0.1);
+    border: 3px solid #ff0000ad;
+    color: #ff0000ad;
+}
+.late-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #ff0000ad;
+}
+.late-list {
+    margin-top: 1rem;
+}
+.late-item {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+    border: 1px solid #ff0000ad;
+    align-items: center;
+}
+.item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.item-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+.due-date {
+    margin-left: 1.8rem;
+    color: #ffaaaa;
+}
+
+.late-amount {
+    margin-left: auto;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #ffffff;
+}
+
+
+/* Bloco 4: Card de Pendências */
+.pending-card {
+    background-color: rgba(255, 165, 0, 0.1);
+    border: 1px solid #ffa500ad;
+    color: #ffa500ad;
+}
+.pending-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #ffa500ad;
+}
+.pending-list {
+    margin-top: 1rem;
+}
+.pending-item {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+    border: 1px solid #ffa500ad;
+    align-items: center;
+}
+.pending-amount {
+    margin-left: auto;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #ffffff;
+}
+
+
+
+/* Classes Utilitárias */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #a0a0a0;
+}
