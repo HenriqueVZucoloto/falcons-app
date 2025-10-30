@@ -1,6 +1,6 @@
 // src/App.jsx
-import Layout from './components/Layout';
-import HomePage from './pages/HomePage';
+import Layout from './components/Layout/Layout';
+import HomePage from './pages/HomePage/HomePage';
 
 function App() {
   return (

@@ -1,6 +1,6 @@
 import { House, Calendar, Users, User } from 'phosphor-react';
 import './Layout.css'
-import falconsLogo from '../assets/falcons-logo.png';
+import falconsLogo from '../../assets/falcons-logo.png';
 
 const Layout = ({ children }) => {
   return (

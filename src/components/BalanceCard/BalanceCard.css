@@ -1,0 +1,46 @@
+/* Estilo Base para o Card */
+.card {
+  background-color: #252525;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Classes Utilitárias */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #a0a0a0;
+}
+
+/* Bloco 2: Card de Saldo */
+.balance-card {
+  background-color: #1c1c1c;
+  border: 1px solid #333;
+}
+
+.balance-amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 1rem 0;
+}
+
+.add-saldo-button {
+  width: 100%;
+  padding: 1rem;
+  background-color: #ffcd32;
+  color: #1A1A1A;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
