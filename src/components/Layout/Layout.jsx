@@ -1,40 +1,58 @@
-import { House, Calendar, Users, User } from 'phosphor-react';
-import './Layout.css'
+import './Layout.css';
+// 1. Importe as ferramentas de logout, a logo e o ícone de Sair
+import { signOut } from 'firebase/auth';
+import { auth } from '../../lib/firebase';
 import falconsLogo from '../../assets/falcons-logo.png';
+import { House, Calendar, Users, User, SignOut } from 'phosphor-react';
 
 const Layout = ({ children }) => {
-  return (
-    <div className="app-container">
-        <header className="header">
-            <div className="logo-container">
-                <img src={falconsLogo} alt="Falcons Logo" className="header-logo" />
-            </div>
-        </header>
 
-        <main className="content">
-            {children}
-        </main>
+    // 2. A função de logout agora vive no topo do componente
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            console.log("Usuário deslogado com sucesso!");
+        } catch (error) {
+            console.error("Erro ao deslogar: ", error);
+        }
+    };
 
-        {/* <footer className="bottom-nav">
-            <a href="#" className="nav-item active">
-                <House size={28} />
-                <span>Início</span>
-            </a>
-            <a href="#" className="nav-item">
-                <Calendar size={28} />
-                <span>Calendário</span>
-            </a>
-            <a href="#" className="nav-item">
-                <Users size={28} />
-                <span>Membros</span>
-            </a>
-            <a href="#" className="nav-item">
-                <User size={28} />
-                <span>Perfil</span>
-            </a>
-        </footer> */}
-    </div>
-  );
+    return (
+        <div className="layout-container">
+            <header className="header">
+                <div className="logo">
+                    <img src={falconsLogo} alt="Falcons Logo"/>
+                </div>
+                <button onClick={handleLogout} className="logout-button" title="Sair">
+                    <SignOut size={24} />
+                    <span>Sair</span>
+                </button>
+            </header>
+
+            <main className="content">
+                {children}
+            </main>
+
+            {/* <footer className="bottom-nav">
+                <a href="#" className="nav-item active">
+                    <House size={28} />
+                    <span>Início</span>
+                </a>
+                <a href="#" className="nav-item">
+                    <Calendar size={28} />
+                    <span>Calendário</span>
+                </a>
+                <a href="#" className="nav-item">
+                    <Users size={28} />
+                    <span>Membros</span>
+                </a>
+                <a href="#" className="nav-item">
+                    <User size={28} />
+                    <span>Perfil</span>
+                </a>
+            </footer> */}
+        </div>
+    );
 };
 
 export default Layout;
