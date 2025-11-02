@@ -17,14 +17,16 @@
 
 /* Itens da Lista (estilos comuns) */
 .item-info {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.25rem;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  margin-top: auto;
+  gap: 0.25rem;
 }
 
 .item-title {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
@@ -43,6 +45,7 @@
 .late-title {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   font-weight: 500;
   color: #ff0000ad;
@@ -60,11 +63,12 @@
   margin-bottom: 0.5rem; /* Isso já está no .card, mas podemos manter */
   color: #ffffff;
   border: 1px solid #ff0000ad;
-  align-items: center;
 }
 
 .due-date {
   color: #ffaaaa;
+  word-wrap: break-word;
+  margin-right: 1rem;
 }
 
 .late-amount {
@@ -72,6 +76,7 @@
   font-weight: 700;
   font-size: 1.5rem;
   color: #ffffff;
+  white-space: nowrap;
 }
 
 /* ===================================== */
@@ -85,6 +90,7 @@
 
 .pending-title {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
@@ -103,7 +109,6 @@
   margin-bottom: 0.5rem; /* Isso já está no .card, mas podemos manter */
   color: #ffffff;
   border: 1px solid #ffa500ad;
-  align-items: center;
 }
 
 .pending-amount {
@@ -111,4 +116,5 @@
   font-weight: 700;
   font-size: 1.5rem;
   color: #ffffff;
+  white-space: nowrap;
 }

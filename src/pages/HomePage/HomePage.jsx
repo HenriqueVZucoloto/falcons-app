@@ -13,14 +13,14 @@ const HomePage = () => {
     const saldo = "500,00";
 
     const latePayments = [
-        { id: 1, name: "Mensalidade - Setembro", dueDate: "Vencido em 05/09/2025", amount: "50,00" },
-        { id: 2, name: "Mensalidade - Outubro", dueDate: "Vencido em 05/10/2025", amount: "50,00" }
+        // { id: 1, name: "Mensalidade - Setembro", dueDate: "Vencido em 05/09/2025", amount: "50,00" },
+        // { id: 2, name: "Mensalidade - Outubro", dueDate: "Vencido em 05/10/2025", amount: "50,00" }
     ];
 
     const pendingPayments = [
-        { id: 1, name: "Inscrição Nacional", dueDate: "Vencimento em 10/11/2025", amount: "150,00" },
-        { id: 2, name: "Jaqueta do Time", dueDate: "Vencimento em 15/11/2025", amount: "80,00" },
-        { id: 3, name: "Uniforme Novo", dueDate: "Vencimento em 20/11/2025", amount: "120,00" }
+        // { id: 1, name: "Inscrição Nacional", dueDate: "Vencimento em 10/11/2025", amount: "150,00" },
+        // { id: 2, name: "Jaqueta do Time", dueDate: "Vencimento em 15/11/2025", amount: "80,00" },
+        // { id: 3, name: "Uniforme Novo", dueDate: "Vencimento em 20/11/2025", amount: "120,00" }
     ];
 
     // === LÓGICA MESTRA ===
