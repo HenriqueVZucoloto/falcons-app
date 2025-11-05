@@ -3,11 +3,14 @@ import React, { useState, useEffect } from 'react';
 import './AdminPage.css'; // Vamos criar este arquivo para estilizar
 import { db } from '../../lib/firebase'; // Nosso conector do Firestore
 import { collection, getDocs } from 'firebase/firestore'; // Funções para buscar uma coleção
+import AddAthleteModal from '../../components/AddAthleteModal/AddAthleteModal';
 
 const AdminPage = () => {
     // 1. States para guardar a lista de atletas e controlar o loading
     const [athletes, setAthletes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    // State para controlar o modal
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     // 2. useEffect para buscar os dados APENAS UMA VEZ, quando a página carregar
     useEffect(() => {
@@ -43,6 +46,12 @@ const AdminPage = () => {
         // No futuro: navigate(`/admin/usuario/${athleteId}`);
     };
 
+    // Função para recarregar a lista (o modal vai chamar)
+    const handleAthleteAdded = () => {
+        // Por enquanto, vamos só logar. No futuro, recarregaria a lista.
+        console.log("Atleta adicionado! (precisa recarregar a lista)");
+    };
+
     // 4. A parte visual (o "Render")
     return (
         <div className="admin-container">
@@ -51,7 +60,10 @@ const AdminPage = () => {
             <section className="admin-section">
                 <div className="section-header">
                     <h2>Gestão de Usuários</h2>
-                    <button className="add-button">+ Novo Atleta</button>
+                    {/* 4. Conecte o botão ao state */}
+                    <button className="add-button" onClick={() => setIsModalOpen(true)}>
+                        + Novo Atleta
+                    </button>
                 </div>
                 
                 {isLoading ? (
@@ -87,6 +99,14 @@ const AdminPage = () => {
                     </div>
                 )}
             </section>
+
+            {/* 5. Renderize o modal condicionalmente */}
+            {isModalOpen && (
+                <AddAthleteModal 
+                    onClose={() => setIsModalOpen(false)}
+                    onAthleteAdded={handleAthleteAdded}
+                />
+            )}
         </div>
     );
 };
