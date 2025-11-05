@@ -1,58 +1,85 @@
 // src/App.jsx
 
 import React, { useState, useEffect } from 'react';
-import { auth } from './lib/firebase'; // Nosso conector
-import { onAuthStateChanged } from 'firebase/auth'; // Observador de login
+import { auth, db } from './lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore'; 
 
 import Layout from './components/Layout/Layout';
 import HomePage from './pages/HomePage/HomePage';
 import LoginPage from './pages/LoginPage/LoginPage';
-// (Vamos precisar de um componente de "Carregando...")
+import AdminPage from './pages/AdminPage/AdminPage';
+
+const LoadingScreen = () => (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#1A1A1A', color: 'white' }}>
+        Carregando...
+    </div>
+);
 
 function App() {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [isLoading, setIsLoading] = useState(true); // Começa carregando
+    const [userProfile, setUserProfile] = useState(null); 
+    const [isLoading, setIsLoading] = useState(true);
+    
+    // 1. O NOVO STATE! Controla a visão atual do usuário.
+    const [currentView, setCurrentView] = useState('atleta'); // Começa como atleta
 
-    // Este "observador" é a forma moderna de verificar o login
     useEffect(() => {
-        // Ele "escuta" o estado do login
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Usuário está logado
-                setIsLoggedIn(true);
+                const docRef = doc(db, "usuarios", user.uid);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const profile = docSnap.data();
+                    setUserProfile(profile);
+                    
+                    // 2. DEFINE A VISÃO PADRÃO
+                    // Se for admin, a visão padrão é 'admin'. Senão, 'atleta'.
+                    if (profile.roles && profile.roles.includes('admin')) {
+                        setCurrentView('admin');
+                    } else {
+                        setCurrentView('atleta');
+                    }
+                } else {
+                    console.error("Usuário autenticado não encontrado no Firestore!");
+                    setUserProfile(null);
+                }
             } else {
-                // Usuário está deslogado
-                setIsLoggedIn(false);
+                setUserProfile(null);
             }
-            // Já verificamos, pode parar de carregar
             setIsLoading(false); 
         });
 
-        // Limpa o "observador" quando o componente desmontar
         return () => unsubscribe();
-    }, []); // O [] vazio faz isso rodar só uma vez
+    }, []);
 
-    // Função que a LoginPage vai chamar
-    const handleLogin = (user) => {
-        setIsLoggedIn(true);
-        // (Aqui, no futuro, vamos ler o 'role' dele e decidir para onde mandar)
-    };
-
-    // 1. Se estivermos checando o login, mostre um "Carregando..."
     if (isLoading) {
-        // (Seria bom criar um componente bonito para isso)
-        return <div style={{ background: '#1A1A1A', height: '100vh', color: 'white' }}>Carregando...</div>;
+        return <LoadingScreen />;
     }
 
-    // 2. Se NÃO estiver logado (e já checamos), mostre o Login
-    if (!isLoggedIn) {
-        return <LoginPage onLoginSuccess={handleLogin} />;
+    if (!userProfile) {
+        return <LoginPage />;
     }
 
-    // 3. Se ESTIVER logado, mostre o app principal
+    // 3. VERIFICA AS PERMISSÕES
+    const isAdmin = userProfile.roles && userProfile.roles.includes('admin');
+    // Só pode trocar de visão se tiver MAIS de um perfil (ex: admin e atleta)
+    const canSwitchView = userProfile.roles && userProfile.roles.length > 1;
+
     return (
-        <Layout>
-            <HomePage />
+        // 4. PASSA AS NOVAS PROPS PARA O LAYOUT
+        <Layout 
+            canSwitch={canSwitchView} 
+            currentView={currentView}
+            onViewChange={setCurrentView} // Passa a função para o Layout mudar o state
+        >
+            {/* 5. A LÓGICA DE RENDERIZAÇÃO MUDA */}
+            {/* Agora é baseada no 'currentView', não mais no 'isAdmin' */}
+            {currentView === 'admin' ? (
+                <AdminPage />
+            ) : (
+                <HomePage />
+            )}
         </Layout>
     );
 }

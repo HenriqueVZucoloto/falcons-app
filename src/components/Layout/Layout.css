@@ -10,7 +10,7 @@
 
 .header {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
 
   padding: 1rem 1.5rem;
   background-color: #252525;
@@ -25,6 +25,32 @@
 
 .logo img {
   height: 32px;
+}
+
+/* 3. O botão de Switch (Centralizado) */
+.switch-view-button {
+  /* max-height: px; */
+  /* margin: 0 auto; empurra o botão para o centro */
+  margin-left: auto; /* Joga o switch para a direita, antes do logout */
+  margin-right: 1rem;
+  
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  background-color: #333;
+  border: 1px solid #555;
+  color: #FFD600;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  text-wrap: nowrap;
+}
+
+.switch-view-button:hover {
+  color: #FFD600;
+  background-color: #444;
 }
 
 .logout-button {
