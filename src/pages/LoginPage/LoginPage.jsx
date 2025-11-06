@@ -22,9 +22,6 @@ const LoginPage = ({ onLoginSuccess }) => {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             
             console.log("Login feito com SUCESSO!", userCredential.user);
-            
-            // Avisa o App.jsx que o login deu certo
-            onLoginSuccess(userCredential.user);
 
         } catch (err) {
             console.error("Erro no login:", err.message);

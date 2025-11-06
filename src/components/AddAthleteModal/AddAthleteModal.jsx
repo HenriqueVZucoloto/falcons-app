@@ -2,6 +2,13 @@
 import React, { useState } from 'react';
 import './AddAthleteModal.css';
 import { X } from 'phosphor-react';
+// 1. IMPORTE AS FERRAMENTAS DO FIREBASE FUNCTIONS
+import { auth, functions } from '../../lib/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { getIdToken } from 'firebase/auth'; // <-- 1. IMPORTE O 'getIdToken'
+
+// 2. PEGUE A REFERÊNCIA DA SUA FUNÇÃO NA NUVEM
+const createAthleteFunction = httpsCallable(functions, 'createAthlete');
 
 // Recebe a função 'onClose' para fechar e 'onAthleteAdded' para atualizar a lista
 const AddAthleteModal = ({ onClose, onAthleteAdded }) => {
@@ -27,23 +34,38 @@ const AddAthleteModal = ({ onClose, onAthleteAdded }) => {
         // AQUI VAI ENTRAR A CHAMADA DA CLOUD FUNCTION (PASSO 2)
         // =============================================
         try {
-            // Por enquanto, vamos simular
-            console.log("Chamando a função de backend para criar:", { nome, email, password });
-            // await criarAtletaFuncao({ nome, email, password });
-            
-            // Se deu certo:
-            // onAthleteAdded(); // Avisa o AdminPage para recarregar a lista
-            // onClose(); // Fecha o modal
-            setError('Funcionalidade ainda em construção!'); // Placeholder
+            // 1. CHECAGEM RÁPIDA
+            if (!auth.currentUser) {
+                // Se o usuário não estiver logado (o que não deve acontecer), pare aqui.
+                console.error("Usuário é nulo no momento da chamada!");
+                throw new Error("Usuário não está logado.");
+            }
+
+            // 2. DEFINA O TOKEN FORA (no escopo principal do try)
+            const idToken = await getIdToken(auth.currentUser);
+            console.log("CONSEGUI O TOKEN DE ID:", idToken);
+
+            // 3. AGORA SIM, CHAME A FUNÇÃO
+            // O 'idToken' existe e é visível aqui.
+            const result = await createAthleteFunction({ 
+                nome: nome, 
+                email: email, 
+                password: password,
+                authToken: idToken 
+            });
+
+            console.log("Resultado da função:", result.data);
+            onAthleteAdded();
+            onClose();
 
         } catch (err) {
             console.error(err);
-            setError('Erro ao criar atleta.');
+            setError(err.message); 
         } finally {
             setIsLoading(false);
         }
     };
-
+    
     return (
         <div className="modal-backdrop" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>

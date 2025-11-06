@@ -4,11 +4,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-
-// ==========================================================
-// VAMOS ADICIONAR ESTE CONSOLE.LOG
-console.log("Variáveis de ambiente lidas:", import.meta.env);
-// ==========================================================
+import { getFunctions } from "firebase/functions";
 
 // 1. Lendo as variáveis de ambiente (do arquivo .env)
 const firebaseConfig = {
@@ -20,11 +16,6 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// ==========================================================
-// E VAMOS ADICIONAR ESTE OUTRO
-console.log("Objeto de configuração sendo enviado:", firebaseConfig);
-// ==========================================================
-
 // 2. Inicializando o app do Firebase
 const app = initializeApp(firebaseConfig);
 
@@ -33,5 +24,6 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app); // Para os comprovantes (JPG/PDF)
+export const functions = getFunctions(app, 'us-central1'); // <-- LINHA CORRETA
 
-export default app; // Exporte o app principal caso precise
+export default app;
