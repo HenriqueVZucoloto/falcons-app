@@ -31,6 +31,9 @@ function App() {
 
                 if (docSnap.exists()) {
                     const profile = docSnap.data();
+                    
+                    profile.uid = user.uid; // Adiciona o UID ao perfil
+
                     setUserProfile(profile);
                     
                     // 2. DEFINE A VISÃO PADRÃO
@@ -78,7 +81,7 @@ function App() {
             {currentView === 'admin' ? (
                 <AdminPage />
             ) : (
-                <HomePage />
+                <HomePage user={userProfile} />
             )}
         </Layout>
     );
