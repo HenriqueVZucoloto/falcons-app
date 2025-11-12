@@ -63,6 +63,9 @@
   margin-bottom: 0.5rem; /* Isso já está no .card, mas podemos manter */
   color: #ffffff;
   border: 1px solid #ff0000ad;
+  
+  text-align: left;
+  width: 100%;
 }
 
 .due-date {
@@ -109,6 +112,9 @@
   margin-bottom: 0.5rem; /* Isso já está no .card, mas podemos manter */
   color: #ffffff;
   border: 1px solid #ffa500ad;
+
+  text-align: left;
+  width: 100%;
 }
 
 .pending-amount {

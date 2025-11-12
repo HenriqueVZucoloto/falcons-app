@@ -2,11 +2,10 @@ import React from 'react';
 import './PaymentsListCard.css';
 import { Clock } from 'phosphor-react';
 
-const PaymentsListCard = ({ type, title, icon, list }) => {
+const PaymentsListCard = ({ type, title, icon, list, onItemClick }) => {
 
-  // Renderização Condicional: Se a lista estiver vazia, não mostre nada!
   if (list.length === 0) {
-    return null; // Ou podemos retornar um card de sucesso!
+    return null;
   }
 
   // Define as classes CSS baseado no 'type'
@@ -25,7 +24,12 @@ const PaymentsListCard = ({ type, title, icon, list }) => {
 
       <div className={`${type}-list`}>
         {list.map((item) => (
-          <div key={item.id} className={itemClasses}>
+          <button
+            key={item.id}
+            className={itemClasses}
+            
+            onClick={() => onItemClick(item)}
+          >
             <div className="item-title">
               <Clock size={20} />
               <span> {item.name} </span>
@@ -34,7 +38,7 @@ const PaymentsListCard = ({ type, title, icon, list }) => {
               <span className='due-date'>{item.dueDate}</span>
               <span className={amountClasses}>R$ {item.amount}</span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

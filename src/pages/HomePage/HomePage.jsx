@@ -7,12 +7,15 @@ import BalanceCard from '../../components/BalanceCard/BalanceCard';
 import PaymentsListCard from '../../components/PaymentsListCard/PaymentsListCard';
 import { db } from '../../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import SubmitPaymentModal from '../../components/SubmitPaymentModal/SubmitPaymentModal';
 
 const HomePage = ({ user }) => {
     
     const [latePayments, setLatePayments] = useState([]);
     const [pendingPayments, setPendingPayments] = useState([]);
     const [isLoadingPayments, setIsLoadingPayments] = useState(true);
+
+    const [selectedPayment, setSelectedPayment] = useState(null);
 
     const userName = user.nome || 'Atleta';
     const saldo = (user.saldo || 0).toFixed(2).replace('.', ',');
@@ -30,9 +33,6 @@ const HomePage = ({ user }) => {
             const hoje = new Date();
 
             try {
-                // 2. A "pergunta" (query) agora é mais inteligente:
-                // "Na coleção 'pagamentos', me traga TUDO onde o 'atletaId' for igual ao meu UID
-                // E onde o 'statusPagamento' for 'pendente'"
                 const q = query(
                     collection(db, "pagamentos"), 
                     where("atletaId", "==", user.uid),
@@ -86,6 +86,18 @@ const HomePage = ({ user }) => {
         fetchPayments();
     }, [user]);
 
+    // 5. Função que o PaymentsListCard vai chamar
+    const handlePaymentClick = (paymentItem) => {
+        console.log("Item clicado:", paymentItem);
+        setSelectedPayment(paymentItem); // Guarda o item no state, o que abre o modal
+    };
+
+    // 6. Função para fechar o modal (e recarregar os dados!)
+    const handleCloseModal = () => {
+        setSelectedPayment(null);
+        // TODO: Precisamos recarregar a lista de pagamentos!
+        // (Por enquanto, o usuário terá que dar F5 para ver o item sumir)
+    };
 
     return (
         <div className="home-container">
@@ -101,7 +113,6 @@ const HomePage = ({ user }) => {
                 <p style={{ textAlign: 'center' }}>Carregando pagamentos...</p>
             ) : (
                 <>
-                    {/* 3. LÓGICA DE SUCESSO RE-ADICIONADA */}
                     {latePayments.length === 0 && pendingPayments.length === 0 ? (
                         // Se AMBAS as listas estiverem vazias, mostre o sucesso
                         <div className="card success-card"> 
@@ -119,6 +130,7 @@ const HomePage = ({ user }) => {
                                 title={`Você possui ${latePayments.length} pagamento(s) atrasado(s)`}
                                 icon={<Warning size={30} />}
                                 list={latePayments}
+                                onItemClick={handlePaymentClick}
                             />
                             
                             <PaymentsListCard
@@ -126,10 +138,19 @@ const HomePage = ({ user }) => {
                                 title={`Você possui ${pendingPayments.length} pagamento(s) pendente(s)`}
                                 icon={<TrendUp size={30} />}
                                 list={pendingPayments}
+                                onItemClick={handlePaymentClick}
                             />
                         </>
                     )}
                 </>
+            )}
+            {/* 8. Renderize o Modal se um item for selecionado */}
+            {selectedPayment && (
+                <SubmitPaymentModal 
+                    user={user}
+                    paymentItem={selectedPayment}
+                    onClose={handleCloseModal}
+                />
             )}
         </div>
     );
