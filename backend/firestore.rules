@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Função para verificar se o usuário logado é um Administrador
+    function isAdmin() {
+      return request.auth != null &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.roles.includes('admin');
+    }
+
+    // Regras para a coleção de usuários (Atletas e Admins)
+    match /usuarios/{userId} {
+      allow get: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow list: if request.auth != null; 
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow create, delete: if isAdmin();
+    }
+
+    // Regras para a coleção de pagamentos (Mensalidades, etc.)
+    match /pagamentos/{paymentId} {
+      allow get: if isAdmin() || (request.auth != null && request.auth.uid == resource.data.atletaId);
+      allow list: if request.auth != null;
+      allow update: if (request.auth != null && request.auth.uid == resource.data.atletaId) || isAdmin();
+      allow create, delete: if false; 
+    }
+  }
+}
