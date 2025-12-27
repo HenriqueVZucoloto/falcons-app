@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Warning, TrendUp, CheckCircle, Lock } from 'phosphor-react';
+import { WarningIcon, TrendUpIcon, CheckCircleIcon, LockIcon } from '@phosphor-icons/react';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import type { UserProfile, Payment, Cobranca } from '../types';
@@ -117,7 +117,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
             
             {blockedBalance > 0 && (
                 <div className="flex items-center gap-2 text-sm text-[#FFD600] bg-[#FFD600]/10 p-3 rounded-lg border border-[#FFD600]/20">
-                    <Lock size={18} />
+                    <LockIcon size={18} />
                     <span>Você possui R$ {blockedBalance.toLocaleString('pt-BR')} em análise.</span>
                 </div>
             )}
@@ -128,7 +128,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
                 <div className="flex flex-col gap-4">
                     {latePayments.length === 0 && pendingPayments.length === 0 ? (
                         <div className="flex items-center gap-4 p-6 bg-green-500/10 border border-green-500 rounded-xl text-green-500"> 
-                            <CheckCircle size={32} />
+                            <CheckCircleIcon size={32} />
                             <div className="flex flex-col">
                                 <strong className="text-lg font-semibold">Você está em dia!</strong>
                                 <span className="text-sm opacity-80">Nenhuma pendência encontrada.</span>
@@ -139,7 +139,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
                             <PaymentsListCard
                                 type="late"
                                 title={`Atrasados (${latePayments.length})`}
-                                icon={<Warning size={30} />}
+                                icon={<WarningIcon size={30} />}
                                 list={latePayments}
                                 onItemClick={handlePaymentClick}
                             />
@@ -147,7 +147,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
                             <PaymentsListCard
                                 type="pending"
                                 title={`Pendentes (${pendingPayments.length})`}
-                                icon={<TrendUp size={30} />}
+                                icon={<TrendUpIcon size={30} />}
                                 list={pendingPayments}
                                 onItemClick={handlePaymentClick}
                             />

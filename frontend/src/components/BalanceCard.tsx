@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet } from 'phosphor-react';
+import { WalletIcon } from '@phosphor-icons/react';
 
 interface BalanceCardProps {
   saldo: string; // Recebe o saldo já formatado como string da HomePage
@@ -10,7 +10,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ saldo }) => {
     <div className="bg-[#1c1c1c] border border-[#333] rounded-2xl p-6 mb-4 shadow-sm">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2 font-medium text-[#a0a0a0]">
-          <Wallet size={20} />
+          <WalletIcon size={20} />
           <span className="text-sm uppercase tracking-wider">Saldo</span>
         </div>
       </div>

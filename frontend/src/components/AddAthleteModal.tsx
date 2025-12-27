@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'phosphor-react';
+import { XIcon } from '@phosphor-icons/react';
 import { auth, functions } from '../lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { getIdToken } from 'firebase/auth';
@@ -72,7 +72,7 @@ const AddAthleteModal: React.FC<AddAthleteModalProps> = ({ onClose, onAthleteAdd
                 <header className="flex justify-between items-center p-6 border-b border-[#333]">
                     <h2 className="text-xl font-bold">Cadastrar Novo Atleta</h2>
                     <button onClick={handleStartClose} className="text-[#a0a0a0] cursor-pointer hover:text-white transition-colors">
-                        <X size={24} />
+                        <XIcon size={24} />
                     </button>
                 </header>
 

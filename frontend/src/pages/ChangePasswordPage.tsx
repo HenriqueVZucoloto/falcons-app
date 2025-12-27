@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { auth, db } from '../lib/firebase';
 import { updatePassword } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
-import { Lock, Eye, EyeSlash } from 'phosphor-react';
+import { LockIcon, EyeIcon, EyeSlashIcon } from '@phosphor-icons/react';
 
 interface ChangePasswordPageProps {
   userUid: string;
@@ -58,7 +58,7 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ userUid, onPass
     <div className="flex flex-col items-center justify-center min-h-[80vh] p-4 text-center">
       <div className="bg-[#252525] p-8 rounded-2xl border border-[#333] w-full max-w-md shadow-xl">
         <div className="bg-[#FFD600]/10 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-          <Lock size={32} className="text-[#FFD600]" />
+          <LockIcon size={32} className="text-[#FFD600]" />
         </div>
         
         <h2 className="text-2xl font-bold mb-2">Primeiro Acesso</h2>
@@ -82,7 +82,7 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ userUid, onPass
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-10 text-[#a0a0a0] cursor-pointer"
             >
-              {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+              {showPassword ? <EyeSlashIcon size={20} /> : <EyeIcon size={20} />}
             </button>
           </div>
 

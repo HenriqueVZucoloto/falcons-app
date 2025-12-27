@@ -2,7 +2,7 @@ import React from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import falconsLogo from '../assets/falcons-logo.png';
-import { SignOut, Swap } from 'phosphor-react';
+import { SignOutIcon, SwapIcon } from '@phosphor-icons/react';
 import type { UserRole } from '../types';
 
 interface LayoutProps {
@@ -43,7 +43,7 @@ const Layout: React.FC<LayoutProps> = ({ children, canSwitch, currentView, onVie
                             onClick={handleViewSwitch} 
                             className="flex items-center gap-2 bg-[#333] border border-[#555] text-[#FFD600] px-4 py-2 rounded-lg font-medium cursor-pointer whitespace-nowrap hover:bg-[#444] transition-colors"
                         >
-                            <Swap size={20} />
+                            <SwapIcon size={20} />
                             <span className="hidden sm:inline text-sm">
                                 {currentView === 'admin' ? 'Ver como Atleta' : 'Ver como Admin'}
                             </span>
@@ -57,7 +57,7 @@ const Layout: React.FC<LayoutProps> = ({ children, canSwitch, currentView, onVie
                     className="ml-auto flex items-center gap-2 text-[#a0a0a0] cursor-pointer p-2 rounded hover:text-[#FFD600] hover:bg-[#333] transition-colors"
                     title="Sair"
                 >
-                    <SignOut size={24} />
+                    <SignOutIcon size={24} />
                     <span className="hidden md:inline">Sair</span>
                 </button>
             </header>

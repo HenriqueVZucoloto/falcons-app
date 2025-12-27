@@ -1,7 +1,7 @@
 // frontend/src/components/PaymentsListCard.tsx
 
 import React from 'react';
-import { Clock } from 'phosphor-react';
+import { ClockIcon } from '@phosphor-icons/react';
 
 // Interface para garantir que os itens da lista tenham o formato correto
 interface PaymentItem {
@@ -48,7 +48,7 @@ const PaymentsListCard: React.FC<PaymentsListCardProps> = ({ type, title, icon, 
                         className={`w-full flex flex-col gap-2 p-6 bg-[#252525] rounded-2xl text-left text-white border transition-all cursor-pointer active:scale-[0.99] ${itemBorder}`}
                     >
                         <div className="flex items-center justify-center md:justify-start gap-2 font-medium text-gray-300">
-                            <Clock size={20} />
+                            <ClockIcon size={20} />
                             <span>{item.name}</span>
                         </div>
                         
