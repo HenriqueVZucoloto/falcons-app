@@ -1,6 +1,5 @@
-// functions/index.js
+// backend/functions/index.js
 
-// 1. IMPORTAÇÃO DA V2 (A MUDANÇA PRINCIPAL)
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -10,14 +9,11 @@ admin.initializeApp();
 const db = getFirestore();
 const authAdmin = getAuth();
 
-// 2. A SINTAXE DA V2 (onCall recebe 'request')
 exports.createAthlete = onCall(async (request) => {
-  
-  // 3. Pegamos 'auth' e 'data' do 'request'
-  const auth = request.auth; // O 'context.auth' agora é 'request.auth'
-  const data = request.data; // O 'data' agora é 'request.data'
+  const auth = request.auth;
+  const data = request.data;
 
-  // 1. VERIFICAÇÃO DE SEGURANÇA: O usuário que está chamando está logado?
+  // 1. VERIFICAÇÃO DE SEGURANÇA
   if (!auth) {
     throw new HttpsError(
       "unauthenticated", 
@@ -25,7 +21,7 @@ exports.createAthlete = onCall(async (request) => {
     );
   }
 
-  // 2. VERIFICAÇÃO DE AUTORIZAÇÃO: O usuário que está chamando é um ADMIN?
+  // 2. VERIFICAÇÃO DE AUTORIZAÇÃO (Admin)
   const adminDocRef = db.collection("usuarios").doc(auth.uid);
   const adminDoc = await adminDocRef.get();
 
@@ -36,36 +32,41 @@ exports.createAthlete = onCall(async (request) => {
     );
   }
 
-  // 3. SE CHEGOU AQUI, É UM ADMIN! Vamos pegar os dados.
-  const { nome, email, password } = data;
+  // 3. CAPTURA DOS DADOS (Incluindo o novo campo 'apelido')
+  // A senha virá como 'falcons2026' enviada pelo frontend
+  const { nome, apelido, email, password } = data;
 
-  // 4. Validação dos dados
-  if (!email || !email.endsWith("@usp.br") || !nome || !password || password.length < 6) {
+  // 4. VALIDAÇÃO DOS DADOS
+  // Adicionamos a validação para o campo apelido
+  if (!email || !email.endsWith("@usp.br") || !nome || !apelido || !password || password.length < 6) {
     throw new HttpsError(
       "invalid-argument", 
-      "Dados inválidos. Verifique o e-mail (@usp.br), nome e senha (mín. 6 caracteres)."
+      "Dados inválidos. Verifique o e-mail (@usp.br), nome, apelido e senha."
     );
   }
 
-  // 5. O GRANDE FINAL: Tenta criar os usuários
   try {
+    // 5. CRIAÇÃO NO FIREBASE AUTH
     const userRecord = await authAdmin.createUser({
       email: email,
       password: password,
       displayName: nome,
     });
 
+    // 6. CRIAÇÃO DO DOCUMENTO NO FIRESTORE
     await db.collection("usuarios").doc(userRecord.uid).set({
       nome: nome,
+      apelido: apelido, // Agora salvamos o apelido do atleta
       email: email,
       saldo: 0,
       roles: ["atleta"],
-      precisaMudarSenha: true,
+      precisaMudarSenha: true, // Mantemos o flag para o futuro "force change"
+      dataCriacao: admin.firestore.FieldValue.serverTimestamp(), // Boa prática de Auditoria
     });
 
     return { 
       status: "success", 
-      message: `Atleta ${nome} criado com sucesso!`, 
+      message: `Atleta ${apelido} criado com sucesso!`, 
       uid: userRecord.uid 
     };
 

@@ -59,7 +59,7 @@ const AdminPage: React.FC = () => {
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold">Gestão de Usuários</h2>
                     <button 
-                        className="bg-[#FFD600] text-[#1A1A1A] px-5 py-2.5 rounded-lg font-bold cursor-pointer hover:bg-[#e6c200] transition-colors"
+                        className="bg-[#FFD600] text-[#1A1A1A] ml-3 px-3 py-2 md:px-5 md:py-2.5 truncate overflow-visible rounded-lg font-bold cursor-pointer hover:bg-[#e6c200] transition-colors active:scale-[0.98]"
                         onClick={() => setIsModalOpen(true)}
                     >
                         + Novo Atleta
@@ -96,7 +96,7 @@ const AdminPage: React.FC = () => {
             <section className="bg-[#252525] p-6 rounded-2xl border border-[#333]">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold">Validação de Pagamentos</h2>
-                    <span className="text-sm font-bold text-[#FFD600] bg-[#FFD600]/10 px-3 py-1 rounded-full">
+                    <span className="text-sm font-bold text-[#FFD600] bg-[#FFD600]/10 px-3 py-1 rounded-full text-center">
                         {pendingPayments.length} em análise
                     </span>
                 </div>
