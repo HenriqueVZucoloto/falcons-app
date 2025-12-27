@@ -2,39 +2,47 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // --- Helpers ---
+    function loggedIn() {
+      return request.auth != null;
+    }
+
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return loggedIn() && request.auth.uid == userId;
     }
 
     function isAdmin() {
       return request.auth != null && 
-             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.roles.includes('admin');
+            // O segredo está no .hasAny(['valor'])
+            get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.roles.hasAny(['admin']);
     }
 
+    // --- Usuários ---
     match /usuarios/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      // get: ver perfil específico | list: listar a coleção inteira
+      allow get: if isAdmin() || isOwner(userId);
       
-      // Combinamos as regras de update em um único bloco para garantir que TODAS as travas funcionem juntas
+      // Essa é a linha que faz o fetch dos usuários na AdminPage funcionar
+      allow list: if isAdmin(); 
+
       allow update: if (isOwner(userId) || isAdmin()) 
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roles', 'email'])
                     && (
-                      // Se o campo mudar, só pode ser de true para false
                       request.resource.data.precisaMudarSenha == resource.data.precisaMudarSenha ||
-                      (resource.data.precisaMudarSenha == true && request.resource.data.precisaMudarSenha == false)
+                      (resource.data.precisaMudarSenha == false && resource.data.precisaMudarSenha == true)
                     );
+      
+      allow create, delete: if isAdmin();
     }
 
+    // --- Pagamentos ---
     match /pagamentos/{paymentId} {
-      // Atleta vê apenas o dele (via query de atletaId), Admin vê tudo
-      allow get: if isAdmin() || (request.auth != null && request.auth.uid == resource.data.atletaId);
-      allow list: if request.auth != null; // A filtragem real deve vir da query no frontend
+      allow get: if isAdmin() || (loggedIn() && resource.data.atletaId == request.auth.uid);
+      allow list: if loggedIn(); // O filtro real é feito pela query no frontend
       
-      // Apenas Admin aprova (muda status) ou Atleta anexa comprovante
-      allow update: if (request.auth != null && request.auth.uid == resource.data.atletaId) || isAdmin();
-      
-      // Importante: No futuro, o Admin precisará de 'allow create' para gerar novas cobranças
-      allow create: if isAdmin(); 
-      allow delete: if false; 
+      allow update: if isAdmin() || (loggedIn() && resource.data.atletaId == request.auth.uid);
+      allow create: if isAdmin();
+      allow delete: if false;
     }
   }
 }
