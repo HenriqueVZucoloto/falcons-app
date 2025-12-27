@@ -125,7 +125,7 @@ const AddAthleteModal: React.FC<AddAthleteModalProps> = ({ onClose, onAthleteAdd
                     <button 
                         type="submit" 
                         disabled={isLoading}
-                        className="w-full p-4 mt-4 bg-[#FFD600] text-[#1A1A1A] rounded-xl font-bold text-lg cursor-pointer disabled:bg-[#555] disabled:cursor-not-allowed hover:bg-[#e6c200] transition-colors"
+                        className="w-full p-4 mt-4 bg-[#FFD600] text-[#1A1A1A] rounded-xl font-bold text-lg cursor-pointer disabled:bg-[#555] disabled:cursor-not-allowed hover:bg-[#e6c200] transition-colors active:scale-[0.98]"
                     >
                         {isLoading ? 'Cadastrando...' : 'Cadastrar Atleta'}
                     </button>
