@@ -1,16 +1,33 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
-    /* No v4, o @apply funciona dentro das camadas após o @import */
-    @apply bg-neutral-950 text-neutral-50;
+  html, body {
+    /* Impede o "puxar para atualizar" e o efeito elástico no mobile */
+    overscroll-behavior-y: none;
+    
+    /* Permite o scroll direcional mas bloqueia gestos de zoom do navegador via CSS */
+    touch-action: pan-x pan-y;
+    
+    /* Opcional: Melhora a renderização de fontes em telas de alta densidade */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    
+    background-color: #1A1A1A;
+    color: #F5F5F5;
+  }
+
+  /* Garante que áreas de scroll interno (como modais) continuem funcionando */
+  .overflow-y-auto {
+    overscroll-behavior-y: auto;
   }
 }
 
+/* Animações de entrada e saída para os Modais */
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+
 @keyframes slideDown {
   from { transform: translateY(0); }
   to { transform: translateY(100%); }

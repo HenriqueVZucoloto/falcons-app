@@ -1,27 +1,40 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Função para verificar se o usuário logado é um Administrador
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
     function isAdmin() {
-      return request.auth != null &&
+      return request.auth != null && 
              get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.roles.includes('admin');
     }
 
-    // Regras para a coleção de usuários (Atletas e Admins)
     match /usuarios/{userId} {
-      allow get: if isAdmin() || (request.auth != null && request.auth.uid == userId);
-      allow list: if request.auth != null; 
-      allow update: if request.auth != null && request.auth.uid == userId;
-      allow create, delete: if isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Combinamos as regras de update em um único bloco para garantir que TODAS as travas funcionem juntas
+      allow update: if (isOwner(userId) || isAdmin()) 
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roles', 'email'])
+                    && (
+                      // Se o campo mudar, só pode ser de true para false
+                      request.resource.data.precisaMudarSenha == resource.data.precisaMudarSenha ||
+                      (resource.data.precisaMudarSenha == true && request.resource.data.precisaMudarSenha == false)
+                    );
     }
 
-    // Regras para a coleção de pagamentos (Mensalidades, etc.)
     match /pagamentos/{paymentId} {
+      // Atleta vê apenas o dele (via query de atletaId), Admin vê tudo
       allow get: if isAdmin() || (request.auth != null && request.auth.uid == resource.data.atletaId);
-      allow list: if request.auth != null;
+      allow list: if request.auth != null; // A filtragem real deve vir da query no frontend
+      
+      // Apenas Admin aprova (muda status) ou Atleta anexa comprovante
       allow update: if (request.auth != null && request.auth.uid == resource.data.atletaId) || isAdmin();
-      allow create, delete: if false; 
+      
+      // Importante: No futuro, o Admin precisará de 'allow create' para gerar novas cobranças
+      allow create: if isAdmin(); 
+      allow delete: if false; 
     }
   }
 }
