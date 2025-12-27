@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { XIcon, UploadSimpleIcon, WalletIcon, PixLogoIcon } from '@phosphor-icons/react';
-import { storage, db } from '../lib/firebase';
+import { storage } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import type { UserProfile } from '../types';
 
 interface FormattedPayment {
@@ -58,7 +58,7 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        
+
         if (valorRestantePix > 0 && !file) {
             setError('Por favor, anexe o comprovante do PIX.');
             return;
@@ -67,33 +67,40 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
         setIsLoading(true);
 
         try {
-            let downloadURL = "";
+            const functions = getFunctions();
 
-            if (file) {
-                const newFileName = `[${user.nome}]-${paymentItem.name.replace(/ /g, '_')}-${Date.now()}`;
-                const storageRef = ref(storage, `comprovantes/${user.uid}/${newFileName}`);
-                const uploadResult = await uploadBytes(storageRef, file);
-                downloadURL = await getDownloadURL(uploadResult.ref);
+            // CENÁRIO 1: PAGAMENTO 100% SALDO (Automático e Imediato)
+            if (valorSaldoUtilizado === valorTotalCobranca) {
+                const pagarTotal = httpsCallable(functions, 'pagarComSaldoTotal');
+                await pagarTotal({ cobrancaId: paymentItem.id });
+                console.log("Pago automaticamente com saldo!");
             }
 
-            await addDoc(collection(db, "pagamentos"), {
-                atletaId: user.uid,
-                atletaNome: user.nome,
-                tituloCobranca: paymentItem.name,
-                tipo: 'pagamento_cobranca',
-                cobrancaId: paymentItem.id,
-                valorTotal: valorTotalCobranca,
-                valorPix: valorRestantePix,
-                valorSaldo: valorSaldoUtilizado,
-                statusPagamento: "em análise",
-                urlComprovante: downloadURL || null,
-                dataEnvio: serverTimestamp(),
-            });
+            // CENÁRIO 2: PAGAMENTO MISTO OU 100% PIX (Vai para Análise)
+            else {
+                let downloadURL = "";
+                if (file) {
+                    const newFileName = `[${user.nome}]-${paymentItem.name.replace(/ /g, '_')}-${Date.now()}`;
+                    const storageRef = ref(storage, `comprovantes/${user.uid}/${newFileName}`);
+                    const uploadResult = await uploadBytes(storageRef, file);
+                    downloadURL = await getDownloadURL(uploadResult.ref);
+                }
+
+                const enviarAnalise = httpsCallable(functions, 'enviarParaAnalise');
+                await enviarAnalise({
+                    cobrancaId: paymentItem.id,
+                    tituloCobranca: paymentItem.name,
+                    valorSaldo: valorSaldoUtilizado,
+                    valorPix: valorRestantePix,
+                    urlComprovante: downloadURL
+                });
+                console.log("Enviado para análise do Admin!");
+            }
 
             handleStartClose();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError("Erro ao enviar. Tente novamente.");
+            setError(err.message || "Erro ao processar pagamento.");
         } finally {
             setIsLoading(false);
         }
@@ -115,11 +122,11 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
 
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-semibold flex items-center gap-2">
-                            <WalletIcon size={18} className="text-[#FFD600]" /> 
+                            <WalletIcon size={18} className="text-[#FFD600]" />
                             Usar Saldo (Disponível: R$ {saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
                         </label>
-                        <input 
-                            type="number" 
+                        <input
+                            type="number"
                             step="0.01"
                             value={valorSaldoUtilizado}
                             onChange={handleSaldoChange}
@@ -133,7 +140,7 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
                                 <span className="flex items-center gap-2"><PixLogoIcon size={18} className="text-[#00BFA5]" /> Restante no PIX:</span>
                                 <span className="font-bold text-[#00BFA5]">R$ {valorRestantePix.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                             </div>
-                            
+
                             <label htmlFor="file-upload" className="flex items-center justify-center gap-2 p-4 bg-[#333] border border-dashed border-[#555] rounded-xl text-sm cursor-pointer hover:bg-[#444] transition-colors">
                                 <UploadSimpleIcon size={20} className="text-[#FFD600]" />
                                 <span>{file ? file.name : 'Anexar comprovante do PIX'}</span>
@@ -143,7 +150,7 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
                     )}
 
                     {error && <p className="text-[#ffaaaa] text-xs text-center bg-red-500/10 p-2 rounded">{error}</p>}
-                    
+
                     <button type="submit" disabled={isLoading} className="w-full p-4 mt-2 bg-[#FFD600] text-[#1A1A1A] rounded-xl font-bold text-lg cursor-pointer hover:bg-[#e6c200] transition-colors">
                         {isLoading ? 'Processando...' : 'Confirmar Pagamento'}
                     </button>

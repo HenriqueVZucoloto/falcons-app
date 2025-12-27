@@ -16,7 +16,7 @@ exports.createAthlete = onCall(async (request) => {
   // 1. VERIFICAÇÃO DE SEGURANÇA
   if (!auth) {
     throw new HttpsError(
-      "unauthenticated", 
+      "unauthenticated",
       "Você precisa estar logado para criar um usuário."
     );
   }
@@ -27,7 +27,7 @@ exports.createAthlete = onCall(async (request) => {
 
   if (!adminDoc.exists || !adminDoc.data().roles.includes("admin")) {
     throw new HttpsError(
-      "permission-denied", 
+      "permission-denied",
       "Você não tem permissão para executar esta ação."
     );
   }
@@ -40,7 +40,7 @@ exports.createAthlete = onCall(async (request) => {
   // Adicionamos a validação para o campo apelido
   if (!email || !email.endsWith("@usp.br") || !nome || !apelido || !password || password.length < 6) {
     throw new HttpsError(
-      "invalid-argument", 
+      "invalid-argument",
       "Dados inválidos. Verifique o e-mail (@usp.br), nome, apelido e senha."
     );
   }
@@ -64,16 +64,16 @@ exports.createAthlete = onCall(async (request) => {
       dataCriacao: admin.firestore.FieldValue.serverTimestamp(), // Boa prática de Auditoria
     });
 
-    return { 
-      status: "success", 
-      message: `Atleta ${apelido} criado com sucesso!`, 
-      uid: userRecord.uid 
+    return {
+      status: "success",
+      message: `Atleta ${apelido} criado com sucesso!`,
+      uid: userRecord.uid
     };
 
   } catch (error) {
     console.error("Erro ao criar usuário:", error);
     throw new HttpsError(
-      "internal", 
+      "internal",
       `Erro ao criar usuário: ${error.message}`
     );
   }
@@ -91,21 +91,32 @@ exports.processarPagamento = onCall(async (request) => {
 
   const pagRef = db.collection("pagamentos").doc(pagamentoId);
   const pagSnap = await pagRef.get();
-  
+
   if (!pagSnap.exists) {
     throw new HttpsError("not-found", "Pagamento não encontrado.");
   }
-  
+
   const pagData = pagSnap.data();
 
   // Ação de Rejeitar: Apenas sinaliza e libera o saldo "preso" (pois não foi descontado)
   if (acao === 'rejeitar') {
-    await pagRef.update({ 
-      statusPagamento: 'rejeitado', 
+    const batch = db.batch();
+
+    // 1. Marca o pagamento como rejeitado
+    batch.update(pagRef, {
+      statusPagamento: 'rejeitado',
       motivoRejeicao: motivo || "Comprovante inválido.",
-      dataProcessamento: admin.firestore.FieldValue.serverTimestamp() 
+      dataProcessamento: admin.firestore.FieldValue.serverTimestamp()
     });
-    return { status: "success", message: "Pagamento rejeitado." };
+
+    // 2. FAZ A COBRANÇA VOLTAR: Se houver uma cobrança vinculada, ela volta a ficar pendente
+    if (pagData.cobrancaId) {
+      const cobRef = db.collection("cobrancas").doc(pagData.cobrancaId);
+      batch.update(cobRef, { status: "pendente" });
+    }
+
+    await batch.commit();
+    return { status: "success", message: "Pagamento rejeitado e cobrança restaurada." };
   }
 
   // Ação de Aprovar: Aqui a mágica acontece
@@ -127,11 +138,92 @@ exports.processarPagamento = onCall(async (request) => {
     }
   }
 
-  batch.update(pagRef, { 
-    statusPagamento: 'aprovado', 
-    dataProcessamento: admin.firestore.FieldValue.serverTimestamp() 
+  batch.update(pagRef, {
+    statusPagamento: 'aprovado',
+    dataProcessamento: admin.firestore.FieldValue.serverTimestamp()
   });
 
   await batch.commit();
   return { status: "success", message: "Pagamento aprovado e saldo atualizado!" };
+});
+
+// FUNÇÃO 1: Pagamento 100% Saldo (Automático)
+exports.pagarComSaldoTotal = onCall(async (request) => {
+  const { cobrancaId } = request.data;
+  const auth = request.auth;
+  if (!auth) throw new HttpsError("unauthenticated", "Login necessário.");
+
+  const userRef = db.collection("usuarios").doc(auth.uid);
+  const cobRef = db.collection("cobrancas").doc(cobrancaId);
+
+  return await db.runTransaction(async (transaction) => {
+    const userDoc = await transaction.get(userRef);
+    const cobDoc = await transaction.get(cobRef);
+
+    if (!cobDoc.exists) throw new HttpsError("not-found", "Cobrança não encontrada.");
+
+    const userData = userDoc.data();
+    const cobData = cobDoc.data();
+
+    if (userData.saldo < cobData.valor) {
+      throw new HttpsError("failed-precondition", "Saldo insuficiente para quitar esta dívida.");
+    }
+
+    // Debita o saldo e quita a cobrança
+    transaction.update(userRef, { saldo: admin.firestore.FieldValue.increment(-cobData.valor) });
+    transaction.update(cobRef, { status: "paga" });
+
+    // Cria o histórico de pagamento JÁ APROVADO
+    const pagRef = db.collection("pagamentos").doc();
+    transaction.set(pagRef, {
+      atletaId: auth.uid,
+      atletaNome: userData.nome,
+      tituloCobranca: cobData.titulo,
+      tipo: 'pagamento_cobranca',
+      cobrancaId: cobrancaId,
+      valorTotal: cobData.valor,
+      valorSaldo: cobData.valor,
+      valorPix: 0,
+      statusPagamento: "aprovado",
+      dataEnvio: admin.firestore.FieldValue.serverTimestamp(),
+      dataProcessamento: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { status: "success" };
+  });
+});
+
+// FUNÇÃO 2: Enviar para Análise (Faz a cobrança "sumir")
+exports.enviarParaAnalise = onCall(async (request) => {
+  const { cobrancaId, valorSaldo, valorPix, urlComprovante, tituloCobranca } = request.data;
+  const auth = request.auth;
+  if (!auth) throw new HttpsError("unauthenticated", "Login necessário.");
+
+  const userDoc = await db.collection("usuarios").doc(auth.uid).get();
+  const userData = userDoc.data();
+
+  const batch = db.batch();
+  const cobRef = db.collection("cobrancas").doc(cobrancaId);
+  const pagRef = db.collection("pagamentos").doc();
+
+  // 1. Muda para 'processando' para sumir da lista do atleta imediatamente
+  batch.update(cobRef, { status: "processando" });
+  
+  // 2. Cria o registro para o Admin validar
+  batch.set(pagRef, {
+    atletaId: auth.uid,
+    atletaNome: userData.nome,
+    tituloCobranca: tituloCobranca,
+    tipo: 'pagamento_cobranca',
+    cobrancaId: cobrancaId,
+    valorTotal: valorSaldo + valorPix,
+    valorSaldo: valorSaldo,
+    valorPix: valorPix,
+    urlComprovante: urlComprovante || null,
+    statusPagamento: "em análise",
+    dataEnvio: admin.firestore.FieldValue.serverTimestamp()
+  });
+
+  await batch.commit();
+  return { status: "success" };
 });

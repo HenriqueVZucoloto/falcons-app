@@ -17,7 +17,7 @@ export interface Cobranca {
   titulo: string;
   valor: number;
   dataVencimento: any; // Timestamp do Firebase
-  status: 'pendente' | 'paga' | 'futura';
+  status: 'pendente' | 'paga' | 'futura' | 'processando';
 }
 
 export type PaymentStatus = 'em análise' | 'aprovado' | 'rejeitado';
