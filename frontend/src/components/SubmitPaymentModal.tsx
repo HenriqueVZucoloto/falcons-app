@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, UploadSimple } from 'phosphor-react';
 import { storage, db } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; // Mudança aqui
 import type { UserProfile } from '../types';
 
 interface FormattedPayment {
@@ -16,9 +16,10 @@ interface SubmitPaymentModalProps {
     user: UserProfile;
     paymentItem: FormattedPayment;
     onClose: () => void;
+    saldoDisponivel: number;
 }
 
-const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentItem, onClose }) => {
+const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentItem, onClose, saldoDisponivel }) => {
     const [file, setFile] = useState<File | null>(null);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +27,6 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
 
     const handleStartClose = () => {
         setIsClosing(true);
-        // Aguarda os 300ms da animação antes de chamar o onClose original
         setTimeout(onClose, 300);
     };
 
@@ -48,34 +48,42 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
         setIsLoading(true);
 
         try {
-            // PASSO 1: Fazer o upload para o Storage
+            // PASSO 1: Upload para o Storage
             const paymentNameForFile = paymentItem.name.replace(/ /g, '_'); 
-            const newFileName = `[${user.nome}]-${paymentNameForFile}-${paymentItem.id}`;
+            const newFileName = `[${user.nome}]-${paymentNameForFile}-${Date.now()}`;
             const storagePath = `comprovantes/${user.uid}/${newFileName}`;
 
             const storageRef = ref(storage, storagePath);
             const uploadResult = await uploadBytes(storageRef, file);
-            
-            // PASSO 2: Pegar a URL pública
             const downloadURL = await getDownloadURL(uploadResult.ref);
 
-            // PASSO 3: Atualizar o Firestore
-            const paymentDocRef = doc(db, "pagamentos", paymentItem.id);
-            await updateDoc(paymentDocRef, {
+            // PASSO 2: Criar NOVO documento em 'pagamentos' (Não mais updateDoc)
+            // Nota: Por enquanto, estamos assumindo pagamento TOTAL via PIX. 
+            // No próximo passo, adicionaremos o campo para o Henrique escolher quanto do saldo usar.
+            const valorNumerico = parseFloat(paymentItem.amount.replace('.', '').replace(',', '.'));
+
+            await addDoc(collection(db, "pagamentos"), {
+                atletaId: user.uid,
+                atletaNome: user.nome,
+                tituloCobranca: paymentItem.name,
+                tipo: 'pagamento_cobranca',
+                cobrancaId: paymentItem.id, // O ID que veio da Home é o ID da cobrança
+                valorTotal: valorNumerico,
+                valorPix: valorNumerico,
+                valorSaldo: 0, // Ajustaremos isso na UI do Modal depois
                 statusPagamento: "em análise",
                 urlComprovante: downloadURL,
-                dataEnvio: new Date(),
-                atletaNome: user.nome,
+                dataEnvio: serverTimestamp(),
             });
 
-            console.log("Pagamento enviado para análise!");
-            onClose();
+            console.log("Pagamento criado com sucesso!");
+            handleStartClose();
 
         } catch (err) {
             console.error("Erro ao enviar pagamento: ", err);
             setError("Erro ao enviar comprovante. Tente novamente.");
         } finally {
-            handleStartClose();
+            setIsLoading(false);
         }
     };
 
@@ -105,7 +113,12 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
                 </header>
 
                 <form className="p-6 flex flex-col gap-4" onSubmit={handleSubmit}>
-                    <p className="text-[#a0a0a0] text-sm">Anexe o comprovante de pagamento (JPG, PNG ou PDF).</p>
+                    <div className="bg-[#333] p-4 rounded-xl border border-[#444]">
+                        <span className="text-[#a0a0a0] text-sm block">Valor da Pendência</span>
+                        <span className="text-[#FFD600] text-2xl font-bold">R$ {paymentItem.amount}</span>
+                    </div>
+
+                    <p className="text-[#a0a0a0] text-sm mt-2">Anexe o comprovante do PIX correspondente ao valor total.</p>
                     
                     <label 
                         htmlFor="file-upload" 

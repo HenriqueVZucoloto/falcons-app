@@ -44,5 +44,16 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow delete: if false;
     }
+
+    match /cobrancas/{cobrancaId} {
+      // Atleta pode ver as suas cobranças, Admin vê todas
+      allow read: if isAdmin() || (loggedIn() && resource.data.atletaId == request.auth.uid);
+      
+      // Apenas Admin pode criar ou deletar cobranças
+      allow create, delete: if isAdmin();
+      
+      // Permitir update para o Admin marcar como 'paga'
+      allow update: if isAdmin();
+    }
   }
 }

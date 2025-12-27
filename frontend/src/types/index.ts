@@ -1,30 +1,40 @@
-// src/types/index.ts
-
-// 1. Definimos os papéis possíveis no sistema
 export type UserRole = 'admin' | 'atleta';
 
-// 2. A estrutura do perfil do usuário no Firestore
 export interface UserProfile {
   uid: string;
   nome: string;
+  apelido: string;
   email: string;
   roles: UserRole[];
   saldo: number;
   precisaMudarSenha?: boolean;
 }
 
-// 3. Os três status que você sugeriu e validamos
-export type PaymentStatus = 'pendente' | 'em análise' | 'pago';
+// NOVA INTERFACE: Representa as dívidas geradas pelo time
+export interface Cobranca {
+  id: string;
+  atletaId: string;
+  titulo: string;
+  valor: number;
+  dataVencimento: any; // Timestamp do Firebase
+  status: 'pendente' | 'paga' | 'futura';
+}
 
-// 4. A estrutura de um lançamento financeiro
+export type PaymentStatus = 'em análise' | 'aprovado' | 'rejeitado';
+
+// INTERFACE REFINADA: Detalha como o valor está sendo pago
 export interface Payment {
   id: string;
   atletaId: string;
   atletaNome: string;
-  despesaNome: string;
-  valor: number;
+  tituloCobranca: string;
+  tipo: 'adicao_saldo' | 'pagamento_cobranca';
+  cobrancaId?: string; 
+  valorTotal: number;    // Substituindo 'valor'
+  valorPix: number;      
+  valorSaldo: number;    
   statusPagamento: PaymentStatus;
-  dataVencimento: any; // Por enquanto 'any', depois usaremos o Timestamp do Firebase
-  dataEnvio?: any;
+  motivoRejeicao?: string;
   urlComprovante?: string;
+  dataEnvio: any;
 }
