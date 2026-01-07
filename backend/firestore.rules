@@ -19,17 +19,14 @@ service cloud.firestore {
 
     // --- Usuários ---
     match /usuarios/{userId} {
-      // get: ver perfil específico | list: listar a coleção inteira
       allow get: if isAdmin() || isOwner(userId);
-      
-      // Essa é a linha que faz o fetch dos usuários na AdminPage funcionar
       allow list: if isAdmin(); 
 
       allow update: if (isOwner(userId) || isAdmin()) 
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roles', 'email'])
                     && (
                       request.resource.data.precisaMudarSenha == resource.data.precisaMudarSenha ||
-                      (resource.data.precisaMudarSenha == false && resource.data.precisaMudarSenha == true)
+                      (resource.data.precisaMudarSenha == true && request.resource.data.precisaMudarSenha == false)
                     );
       
       allow create, delete: if isAdmin();

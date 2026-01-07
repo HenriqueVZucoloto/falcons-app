@@ -48,7 +48,11 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ userUid, onPass
       onPasswordChanged();
     } catch (err: any) {
       console.error(err);
-      setError("Erro ao atualizar senha. Tente fazer login novamente.");
+      if (err.code === 'auth/requires-recent-login') {
+        setError("Para segurança, faça login novamente antes de mudar a senha.");
+      } else {
+        setError("Erro ao atualizar dados. Tente novamente.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +64,7 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ userUid, onPass
         <div className="bg-[#FFD600]/10 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
           <LockIcon size={32} className="text-[#FFD600]" />
         </div>
-        
+
         <h2 className="text-2xl font-bold mb-2">Primeiro Acesso</h2>
         <p className="text-[#a0a0a0] mb-6">
           Para sua segurança, escolha uma nova senha antes de continuar.
@@ -69,7 +73,7 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ userUid, onPass
         <form onSubmit={handlePasswordChange} className="flex flex-col gap-4 text-left">
           <div className="relative">
             <label className="text-sm text-[#a0a0a0] mb-1 block">Nova Senha</label>
-            <input 
+            <input
               type={showPassword ? "text" : "password"}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -77,7 +81,7 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ userUid, onPass
               placeholder="••••••••"
               required
             />
-            <button 
+            <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-10 text-[#a0a0a0] cursor-pointer"
@@ -88,7 +92,7 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ userUid, onPass
 
           <div>
             <label className="text-sm text-[#a0a0a0] mb-1 block">Confirmar Senha</label>
-            <input 
+            <input
               type={showPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -100,7 +104,7 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ userUid, onPass
 
           {error && <p className="text-[#ffaaaa] text-sm text-center bg-red-500/10 p-2 rounded">{error}</p>}
 
-          <button 
+          <button
             type="submit"
             disabled={isLoading}
             className="w-full py-4 bg-[#FFD600] text-[#1A1A1A] font-bold rounded-xl mt-2 cursor-pointer disabled:bg-[#555] hover:bg-[#e6c200] transition-colors active:scale-[0.98]"
