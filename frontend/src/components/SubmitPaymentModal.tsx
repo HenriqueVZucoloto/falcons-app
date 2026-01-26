@@ -4,6 +4,7 @@ import { storage } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import type { UserProfile } from '../types';
+import { formatCurrency } from '../utils/masks';
 
 interface FormattedPayment {
     id: string;
@@ -20,6 +21,7 @@ interface SubmitPaymentModalProps {
 }
 
 const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentItem, onClose, saldoDisponivel }) => {
+    const [valorSaldoDisplay, setValorSaldoDisplay] = useState('');
     const [valorSaldoUtilizado, setValorSaldoUtilizado] = useState(0);
     const [file, setFile] = useState<File | null>(null);
     const [error, setError] = useState('');
@@ -42,17 +44,28 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
     };
 
     const handleSaldoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = parseFloat(e.target.value) || 0;
-        if (val > valorTotalCobranca) {
-            setValorSaldoUtilizado(valorTotalCobranca);
-            return;
+        const { raw, display } = formatCurrency(e.target.value);
+
+        if (raw > valorTotalCobranca && valorTotalCobranca < saldoDisponivel) {
+             // Se passar do total da conta, trava no total
+             const totalFormatado = valorTotalCobranca.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+             setValorSaldoUtilizado(valorTotalCobranca);
+             setValorSaldoDisplay(totalFormatado);
+             return;
         }
-        else if (val > saldoDisponivel) {
+
+        if (raw > saldoDisponivel && saldoDisponivel < valorTotalCobranca) {
+            // Se passar do saldo, trava o total e avisa o erro
             setError(`Limite disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR')}`);
+            setValorSaldoUtilizado(saldoDisponivel);
+            setValorSaldoDisplay(saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
             return;
+        } else {
+            setError('');
         }
-        setError('');
-        setValorSaldoUtilizado(val);
+
+        setValorSaldoUtilizado(raw);
+        setValorSaldoDisplay(display);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -125,10 +138,11 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
                             <WalletIcon size={18} className="text-[#FFD600]" />
                             Usar Saldo (Disponível: R$ {saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
                         </label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={valorSaldoUtilizado}
+                        <input 
+                            type="text" // Text para aplicar máscara
+                            inputMode="numeric"
+                            placeholder="0,00"
+                            value={valorSaldoDisplay}
                             onChange={handleSaldoChange}
                             className="bg-[#333] border border-[#444] p-3 rounded-lg text-white focus:border-[#FFD600] outline-none"
                         />

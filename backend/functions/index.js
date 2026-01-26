@@ -46,7 +46,7 @@ exports.createAthlete = onCall(async (request) => {
   }
 
   try {
-    // 5. CRIAÇÃO NO FIREBASE AUTH
+    // CRIAÇÃO NO FIREBASE AUTH
     const userRecord = await authAdmin.createUser({
       email: email,
       password: password,
@@ -61,7 +61,7 @@ exports.createAthlete = onCall(async (request) => {
       saldo: 0,
       roles: ["atleta"],
       precisaMudarSenha: true, // Mantemos o flag para o futuro "force change"
-      dataCriacao: admin.firestore.FieldValue.serverTimestamp(), // Boa prática de Auditoria
+      dataCriacao: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     return {
@@ -83,7 +83,7 @@ exports.processarPagamento = onCall(async (request) => {
   const { pagamentoId, acao, motivo } = request.data;
   const auth = request.auth;
 
-  // 1. Verificação de Admin
+  // Verificação de Admin
   const adminDoc = await db.collection("usuarios").doc(auth.uid).get();
   if (!adminDoc.exists || !adminDoc.data().roles.includes("admin")) {
     throw new HttpsError("permission-denied", "Acesso restrito a administradores.");
@@ -102,14 +102,14 @@ exports.processarPagamento = onCall(async (request) => {
   if (acao === 'rejeitar') {
     const batch = db.batch();
 
-    // 1. Marca o pagamento como rejeitado
+    // Marca o pagamento como rejeitado
     batch.update(pagRef, {
       statusPagamento: 'rejeitado',
       motivoRejeicao: motivo || "Comprovante inválido.",
       dataProcessamento: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // 2. FAZ A COBRANÇA VOLTAR: Se houver uma cobrança vinculada, ela volta a ficar pendente
+    // FAZ A COBRANÇA VOLTAR: Se houver uma cobrança vinculada, ela volta a ficar pendente
     if (pagData.cobrancaId) {
       const cobRef = db.collection("cobrancas").doc(pagData.cobrancaId);
       batch.update(cobRef, { status: "pendente" });
@@ -119,7 +119,7 @@ exports.processarPagamento = onCall(async (request) => {
     return { status: "success", message: "Pagamento rejeitado e cobrança restaurada." };
   }
 
-  // Ação de Aprovar: Aqui a mágica acontece
+  // Ação de Aprovar
   const batch = db.batch();
   const userRef = db.collection("usuarios").doc(pagData.atletaId);
 
@@ -127,12 +127,12 @@ exports.processarPagamento = onCall(async (request) => {
     // Aumenta o saldo real com o valor do PIX aprovado
     batch.update(userRef, { saldo: admin.firestore.FieldValue.increment(pagData.valorPix) });
   } else if (pagData.tipo === 'pagamento_cobranca') {
-    // 1. Marca a cobrança como paga
+    // Marca a cobrança como paga
     if (pagData.cobrancaId) {
       const cobRef = db.collection("cobrancas").doc(pagData.cobrancaId);
       batch.update(cobRef, { status: 'paga' });
     }
-    // 2. Desconta o saldo real se houve uso de saldo (misto ou total)
+    // Desconta o saldo real se houve uso de saldo (misto ou total)
     if (pagData.valorSaldo > 0) {
       batch.update(userRef, { saldo: admin.firestore.FieldValue.increment(-pagData.valorSaldo) });
     }
@@ -147,7 +147,7 @@ exports.processarPagamento = onCall(async (request) => {
   return { status: "success", message: "Pagamento aprovado e saldo atualizado!" };
 });
 
-// FUNÇÃO 1: Pagamento 100% Saldo (Automático)
+// Pagamento 100% Saldo (Automático)
 exports.pagarComSaldoTotal = onCall(async (request) => {
   const { cobrancaId } = request.data;
   const auth = request.auth;
@@ -193,9 +193,8 @@ exports.pagarComSaldoTotal = onCall(async (request) => {
   });
 });
 
-// FUNÇÃO 2: Enviar para Análise (Faz a cobrança "sumir")
 exports.enviarParaAnalise = onCall(async (request) => {
-  const { cobrancaId, valorSaldo, valorPix, urlComprovante, tituloCobranca } = request.data;
+  const { cobrancaId, valorSaldo, valorPix, urlComprovante, tituloCobranca, tipo } = request.data;
   const auth = request.auth;
   if (!auth) throw new HttpsError("unauthenticated", "Login necessário.");
 
@@ -203,22 +202,24 @@ exports.enviarParaAnalise = onCall(async (request) => {
   const userData = userDoc.data();
 
   const batch = db.batch();
-  const cobRef = db.collection("cobrancas").doc(cobrancaId);
   const pagRef = db.collection("pagamentos").doc();
 
-  // 1. Muda para 'processando' para sumir da lista do atleta imediatamente
-  batch.update(cobRef, { status: "processando" });
-  
-  // 2. Cria o registro para o Admin validar
+  // Se for pagamento de dívida, faz a cobrança "sumir"
+  if (tipo === 'pagamento_cobranca' && cobrancaId) {
+    const cobRef = db.collection("cobrancas").doc(cobrancaId);
+    batch.update(cobRef, { status: "processando" });
+  }
+
+  // Cria o registro (Funciona para ambos os tipos)
   batch.set(pagRef, {
     atletaId: auth.uid,
     atletaNome: userData.nome,
-    tituloCobranca: tituloCobranca,
-    tipo: 'pagamento_cobranca',
-    cobrancaId: cobrancaId,
-    valorTotal: valorSaldo + valorPix,
-    valorSaldo: valorSaldo,
-    valorPix: valorPix,
+    tituloCobranca: tituloCobranca || "Adição de Saldo",
+    tipo: tipo || 'pagamento_cobranca',
+    cobrancaId: cobrancaId || null,
+    valorTotal: (valorSaldo || 0) + (valorPix || 0),
+    valorSaldo: valorSaldo || 0,
+    valorPix: valorPix || 0,
     urlComprovante: urlComprovante || null,
     statusPagamento: "em análise",
     dataEnvio: admin.firestore.FieldValue.serverTimestamp()
