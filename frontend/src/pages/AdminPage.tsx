@@ -3,16 +3,21 @@ import { db } from '../lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import type { UserProfile, Payment } from '../types';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { PlusIcon } from '@phosphor-icons/react';
 
 import AddAthleteModal from '../components/AddAthleteModal';
+import CreateChargeModal from '../components/CreateChargeModal'; // Novo import
 
-import { semearDadosTeste } from '../lib/seed'; // Importa a função de semear dados
+import { semearDadosTeste } from '../lib/seed';
 
 const AdminPage: React.FC = () => {
     const [athletes, setAthletes] = useState<UserProfile[]>([]);
     const [pendingPayments, setPendingPayments] = useState<Payment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    
+    // Estados dos Modais
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCreateChargeModalOpen, setIsCreateChargeModalOpen] = useState(false); // Novo estado
 
     const functions = getFunctions();
 
@@ -20,14 +25,14 @@ const AdminPage: React.FC = () => {
         let motivo = "";
         if (acao === 'rejeitar') {
             motivo = window.prompt("Digite o motivo da rejeição:") || "";
-            if (!motivo) return; // Cancela se o admin não explicar o porquê
+            if (!motivo) return;
         }
 
         try {
             const proc = httpsCallable(functions, 'processarPagamento');
             await proc({ pagamentoId, acao, motivo });
             alert(`Pagamento ${acao === 'aprovar' ? 'aprovado' : 'rejeitado'} com sucesso!`);
-            window.location.reload(); // Simples para teste, depois podemos otimizar o state
+            window.location.reload();
         } catch (error) {
             console.error(error);
             alert("Erro ao processar pagamento.");
@@ -38,7 +43,7 @@ const AdminPage: React.FC = () => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                // Tarefa 1: Buscar Atletas (todos os usuários)
+                // Tarefa 1: Buscar Atletas
                 const usersCollectionRef = collection(db, "usuarios");
                 const usersSnapshot = await getDocs(usersCollectionRef);
                 const athletesList = usersSnapshot.docs.map(doc => ({
@@ -74,13 +79,30 @@ const AdminPage: React.FC = () => {
     };
 
     return (
-        <div className="w-full max-w-225 mx-auto flex flex-col gap-8">
+        <div className="w-full max-w-225 mx-auto flex flex-col gap-8 pb-10">
             <h1 className="text-3xl font-bold text-white">Painel do Administrador</h1>
 
-            {/* Seção 1: Gestão de Usuários */}
+            {/* --- NOVA SEÇÃO: Gestão de Cobranças (No Topo) --- */}
+            <section className="bg-[#252525] p-6 rounded-2xl border border-[#333]">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h2 className="text-xl font-semibold text-white">Gestão de Cobranças</h2>
+                        <p className="text-sm text-[#a0a0a0] mt-1">Crie novas mensalidades ou taxas extras para o time.</p>
+                    </div>
+                    <button
+                        className="bg-[#FFD600] text-[#1A1A1A] px-5 py-2.5 rounded-lg font-bold cursor-pointer hover:bg-[#e6c200] transition-colors active:scale-[0.98] flex items-center gap-2"
+                        onClick={() => setIsCreateChargeModalOpen(true)}
+                    >
+                        <PlusIcon size={20} weight="bold" />
+                        Nova Cobrança
+                    </button>
+                </div>
+            </section>
+
+            {/* Seção 1 Original: Gestão de Usuários */}
             <section className="bg-[#252525] p-6 rounded-2xl border border-[#333]">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold">Gestão de Usuários</h2>
+                    <h2 className="text-xl font-semibold text-white">Gestão de Usuários</h2>
                     <button
                         className="bg-[#FFD600] text-[#1A1A1A] ml-3 px-3 py-2 md:px-5 md:py-2.5 truncate overflow-visible rounded-lg font-bold cursor-pointer hover:bg-[#e6c200] transition-colors active:scale-[0.98]"
                         onClick={() => setIsModalOpen(true)}
@@ -115,10 +137,10 @@ const AdminPage: React.FC = () => {
                 )}
             </section>
 
-            {/* Seção 2: Validação de Pagamentos */}
+            {/* Seção 2 Original: Validação de Pagamentos */}
             <section className="bg-[#252525] p-6 rounded-2xl border border-[#333]">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold">Validação de Pagamentos</h2>
+                    <h2 className="text-xl font-semibold text-white">Validação de Pagamentos</h2>
                     <span className="text-sm font-bold text-[#FFD600] bg-[#FFD600]/10 px-3 py-1 rounded-full text-center">
                         {pendingPayments.length} em análise
                     </span>
@@ -167,19 +189,28 @@ const AdminPage: React.FC = () => {
                 )}
             </section>
 
+            {/* Modais */}
             {isModalOpen && (
                 <AddAthleteModal
                     onClose={() => setIsModalOpen(false)}
                     onAthleteAdded={() => {
-                        // Aqui você pode disparar um novo fetch de dados se quiser atualizar a lista na hora
                         console.log("Atleta cadastrado com sucesso!");
                     }}
                 />
             )}
 
+            {isCreateChargeModalOpen && (
+                <CreateChargeModal 
+                    onClose={() => setIsCreateChargeModalOpen(false)}
+                    onSuccess={() => {
+                        alert("Cobranças criadas e enviadas para os atletas!");
+                    }}
+                />
+            )}
+
             <button
-                onClick={() => semearDadosTeste("wbilddxsNLVyXzh04wmuLcn5MgM2")} // Passe o seu UID aqui
-                className="bg-red-600 text-white p-2 rounded mb-4"
+                onClick={() => semearDadosTeste("wbilddxsNLVyXzh04wmuLcn5MgM2")}
+                className="bg-red-600 text-white p-2 rounded mb-4 w-fit"
             >
                 ⚙️ Semear Dados (Clique uma vez)
             </button>
