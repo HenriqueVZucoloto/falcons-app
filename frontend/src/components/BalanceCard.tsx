@@ -1,19 +1,30 @@
 import React from 'react';
-import { WalletIcon } from '@phosphor-icons/react';
+import { WalletIcon, ClockCounterClockwiseIcon } from '@phosphor-icons/react';
 
 interface BalanceCardProps {
   saldo: string;
   onAddBalance: () => void;
+  onViewStatement: () => void; // Nova Prop
 }
 
-const BalanceCard: React.FC<BalanceCardProps> = ({ saldo, onAddBalance }) => {
+const BalanceCard: React.FC<BalanceCardProps> = ({ saldo, onAddBalance, onViewStatement }) => {
   return (
-    <div className="bg-[#1c1c1c] border border-[#333] rounded-2xl p-6 mb-4 shadow-sm">
-      <div className="flex justify-between items-center">
+    <div className="bg-[#1c1c1c] border border-[#333] rounded-2xl p-6 mb-4 shadow-sm relative overflow-hidden">
+      
+      <div className="flex justify-between items-start">
         <div className="flex items-center gap-2 font-medium text-[#a0a0a0]">
           <WalletIcon size={20} />
           <span className="text-sm uppercase tracking-wider">Saldo Disponível</span>
         </div>
+        
+        {/* Botão de Extrato */}
+        <button 
+            onClick={onViewStatement}
+            className="flex items-center gap-1 text-xs font-bold text-[#FFD600] bg-[#FFD600]/10 px-3 py-1.5 rounded-lg hover:bg-[#FFD600]/20 transition-colors cursor-pointer"
+        >
+            <ClockCounterClockwiseIcon size={16} />
+            Extrato
+        </button>
       </div>
 
       <p className="text-4xl font-bold my-4 text-[#F5F5F5]">

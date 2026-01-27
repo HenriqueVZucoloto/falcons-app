@@ -19,9 +19,10 @@ interface FormattedPayment {
 
 interface HomePageProps {
     user: UserProfile;
+    onNavigateToStatement: () => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ user }) => {
+const HomePage: React.FC<HomePageProps> = ({ user, onNavigateToStatement }) => {
     const [latePayments, setLatePayments] = useState<FormattedPayment[]>([]);
     const [pendingPayments, setPendingPayments] = useState<FormattedPayment[]>([]);
     const [analysisPayments, setAnalysisPayments] = useState<Payment[]>([]);
@@ -119,6 +120,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
             <BalanceCard 
                 saldo={saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 onAddBalance={() => setIsAddBalanceModalOpen(true)}
+                onViewStatement={onNavigateToStatement}
             />
 
             {isLoadingPayments ? (
