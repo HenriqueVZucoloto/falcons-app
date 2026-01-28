@@ -134,7 +134,7 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                 <header className="flex justify-between items-center p-6 border-b border-[#333]">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
                         <CurrencyDollarIcon size={24} className="text-[#FFD600]" />
-                        Nova Cobrança em Massa
+                        Nova Cobrança
                     </h2>
                     <button onClick={handleStartClose} className="text-[#a0a0a0] hover:text-white cursor-pointer"><XIcon size={24} /></button>
                 </header>

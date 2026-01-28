@@ -72,7 +72,7 @@ function App() {
     // 2. Login
     if (!userProfile) return <LoginPage />;
 
-    // 3. Troca de Senha Obrigatória (Sem Layout)
+    // 3. Troca de Senha Obrigatória
     if (userProfile.precisaMudarSenha) {
         return (
             <div className="min-h-screen bg-[#121212] text-white p-8 flex items-center justify-center">
@@ -80,6 +80,7 @@ function App() {
                     <ChangePasswordPage 
                         userUid={userProfile.uid} 
                         onPasswordChanged={() => loadUserProfile(userProfile.uid)} 
+                        isFirstAccess={true}
                     />
                 </div>
             </div>

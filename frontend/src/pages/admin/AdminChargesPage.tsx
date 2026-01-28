@@ -23,7 +23,7 @@ const AdminChargesPage: React.FC = () => {
                     onClick={() => setIsCreateChargeModalOpen(true)}
                 >
                     <PlusIcon size={20} weight="bold" />
-                    Criar em Massa
+                    Criar Cobrança
                 </button>
             </section>
 

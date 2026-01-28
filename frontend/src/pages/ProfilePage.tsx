@@ -21,7 +21,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
                 <button onClick={() => setIsChangingPass(false)} className="text-sm text-[#a0a0a0] hover:text-white self-start">
                     ← Voltar
                 </button>
-                <ChangePasswordPage userUid={user.uid} onPasswordChanged={() => setIsChangingPass(false)} />
+                <ChangePasswordPage 
+                    userUid={user.uid} 
+                    onPasswordChanged={() => setIsChangingPass(false)} 
+                    isFirstAccess={false} // Opcional, o padrão já é false
+                />
             </div>
         );
     }
