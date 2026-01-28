@@ -1,19 +1,24 @@
-// frontend/src/App.tsx
 import { useState, useEffect } from 'react';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import type { UserProfile } from './types';
 
-// Importação dos tipos
-import type { UserProfile, UserRole } from './types';
-
-// Componentes
+// Configuração de Navegação
 import Layout from './components/Layout';
-import HomePage from './pages/HomePage';
+import type { PageType } from './config/navigation';
+
+// Páginas Comuns/Atleta
 import LoginPage from './pages/LoginPage';
-import AdminPage from './pages/AdminPage';
+import HomePage from './pages/HomePage';
+import StatementPage from './pages/StatementPage';
+import ProfilePage from './pages/ProfilePage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
-import StatementPage from './pages/StatementPage'; // Novo import
+
+// Páginas Admin (Novas)
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminAthletesPage from './pages/admin/AdminAthletesPage';
+import AdminChargesPage from './pages/admin/AdminChargesPage';
 
 const LoadingScreen = () => (
     <div className="flex items-center justify-center h-screen bg-[#121212] text-white">
@@ -23,13 +28,11 @@ const LoadingScreen = () => (
 
 function App() {
     const [isLoading, setIsLoading] = useState(true);
-    const [currentView, setCurrentView] = useState<UserRole>('atleta');
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     
-    // Novo estado para controlar a visualização do Extrato dentro da visão de Atleta
-    const [showStatement, setShowStatement] = useState(false);
+    // Estado único de navegação (controla qual tela aparece no miolo do Layout)
+    const [activePage, setActivePage] = useState<PageType>('home');
 
-    // Função centralizada para buscar os dados do usuário
     const loadUserProfile = async (uid: string) => {
         try {
             const docRef = doc(db, "usuarios", uid);
@@ -39,85 +42,88 @@ function App() {
                 const profile = docSnap.data() as UserProfile;
                 profile.uid = uid;
                 setUserProfile(profile);
-
-                // Define a visão padrão baseada nos roles
+                
+                // Se o usuário for admin, podemos jogá-lo direto para o dashboard, 
+                // ou manter na home. Vamos manter na home por padrão.
                 if (profile.roles && profile.roles.includes('admin')) {
-                    setCurrentView('admin');
-                } else {
-                    setCurrentView('atleta');
+                    // Opcional: setActivePage('admin_dashboard');
                 }
             } else {
-                console.error("Usuário não encontrado no Firestore!");
+                console.error("Usuário não encontrado!");
                 setUserProfile(null);
             }
         } catch (error) {
-            console.error("Erro ao carregar perfil:", error);
+            console.error(error);
         }
     };
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                await loadUserProfile(user.uid);
-            } else {
-                setUserProfile(null);
-            }
+            if (user) await loadUserProfile(user.uid);
+            else setUserProfile(null);
             setIsLoading(false);
         });
-
         return () => unsubscribe();
     }, []);
 
-    // Resetar o extrato quando trocar de visão (Admin <-> Atleta)
-    const handleViewChange = (view: UserRole) => {
-        setCurrentView(view);
-        setShowStatement(false);
-    };
-
+    // 1. Loading
     if (isLoading) return <LoadingScreen />;
+    
+    // 2. Login
     if (!userProfile) return <LoginPage />;
 
-    // Interceptador de Troca de Senha
+    // 3. Troca de Senha Obrigatória (Sem Layout)
     if (userProfile.precisaMudarSenha) {
         return (
-            <Layout canSwitch={false} currentView="atleta" onViewChange={() => { }}>
-                <ChangePasswordPage 
-                    userUid={userProfile.uid} 
-                    onPasswordChanged={() => {
-                        loadUserProfile(userProfile.uid); 
-                    }} 
-                />
-            </Layout>
+            <div className="min-h-screen bg-[#121212] text-white p-8 flex items-center justify-center">
+                <div className="w-full max-w-md">
+                    <ChangePasswordPage 
+                        userUid={userProfile.uid} 
+                        onPasswordChanged={() => loadUserProfile(userProfile.uid)} 
+                    />
+                </div>
+            </div>
         );
     }
 
-    const canSwitchView = userProfile.roles && userProfile.roles.includes('admin') && userProfile.roles.includes('atleta');
+    // 4. Roteador de Conteúdo (Switch Case)
+    const renderContent = () => {
+        switch (activePage) {
+            // --- Área do Atleta ---
+            case 'home':
+                return <HomePage 
+                    user={userProfile} 
+                    onNavigateToStatement={() => setActivePage('statement')} 
+                />;
+            case 'statement':
+                return <StatementPage user={userProfile} onBack={() => setActivePage('home')} />;
+            case 'profile':
+                return <ProfilePage user={userProfile} />;
+            
+            // --- Área do Admin ---
+            case 'admin_dashboard':
+                return <AdminDashboardPage />;
+            case 'admin_athletes':
+                return <AdminAthletesPage />;
+            case 'admin_charges':
+                return <AdminChargesPage />;
+            
+            default:
+                return <HomePage 
+                    user={userProfile} 
+                    onNavigateToStatement={() => setActivePage('statement')} 
+                />;
+        }
+    };
 
+    // 5. Layout Principal (Sidebar/BottomNav)
     return (
         <Layout
-            canSwitch={canSwitchView || false}
-            currentView={currentView}
-            onViewChange={handleViewChange}
+            user={userProfile}
+            activePage={activePage}
+            onNavigate={setActivePage}
         >
-            {/* Roteamento Lógico */}
-            {currentView === 'admin' ? (
-                <AdminPage />
-            ) : (
-                // Área do Atleta
-                <>
-                    {showStatement ? (
-                        <StatementPage 
-                            user={userProfile} 
-                            onBack={() => setShowStatement(false)} 
-                        />
-                    ) : (
-                        <HomePage 
-                            user={userProfile} 
-                            onNavigateToStatement={() => setShowStatement(true)}
-                        />
-                    )}
-                </>
-            )}
+            {renderContent()}
         </Layout>
     );
 }

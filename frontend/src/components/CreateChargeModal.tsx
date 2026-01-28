@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Users, CheckSquare, Square, MagnifyingGlass, CalendarBlank, CurrencyDollar } from '@phosphor-icons/react';
+import { XIcon, UsersIcon, CheckSquareIcon, SquareIcon, MagnifyingGlassIcon, CalendarBlankIcon, CurrencyDollarIcon } from '@phosphor-icons/react';
 import { db } from '../lib/firebase';
 import { collection, getDocs, writeBatch, doc, Timestamp } from 'firebase/firestore';
 import { formatCurrency } from '../utils/masks';
@@ -133,10 +133,10 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                 {/* Header */}
                 <header className="flex justify-between items-center p-6 border-b border-[#333]">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <CurrencyDollar size={24} className="text-[#FFD600]" />
+                        <CurrencyDollarIcon size={24} className="text-[#FFD600]" />
                         Nova Cobrança em Massa
                     </h2>
-                    <button onClick={handleStartClose} className="text-[#a0a0a0] hover:text-white cursor-pointer"><X size={24} /></button>
+                    <button onClick={handleStartClose} className="text-[#a0a0a0] hover:text-white cursor-pointer"><XIcon size={24} /></button>
                 </header>
 
                 <div className="flex-1 overflow-y-auto p-6 flex flex-col md:flex-row gap-6">
@@ -169,7 +169,7 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                         <div className="flex flex-col gap-2">
                             <label className="text-sm text-[#a0a0a0]">Data de Vencimento</label>
                             <div className="relative">
-                                <CalendarBlank size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0a0a0]" />
+                                <CalendarBlankIcon size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0a0a0]" />
                                 <input 
                                     type="date" 
                                     className="w-full bg-[#333] border border-[#444] p-3 pl-10 rounded-xl text-white outline-none focus:border-[#FFD600]"
@@ -184,7 +184,7 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                     <div className="flex-1 flex flex-col gap-2 bg-[#1A1A1A] p-4 rounded-xl border border-[#333]">
                         <div className="flex justify-between items-center mb-2">
                             <span className="text-sm font-semibold text-white flex items-center gap-2">
-                                <Users size={18} /> Atletas ({selectedUsers.length})
+                                <UsersIcon size={18} /> Atletas ({selectedUsers.length})
                             </span>
                             <button 
                                 type="button" 
@@ -196,7 +196,7 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                         </div>
 
                         <div className="relative mb-2">
-                            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" />
+                            <MagnifyingGlassIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" />
                             <input 
                                 type="text" 
                                 placeholder="Buscar atleta..." 
@@ -206,7 +206,7 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                             />
                         </div>
 
-                        <div className="flex-1 overflow-y-auto max-h-[200px] flex flex-col gap-1 pr-1 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto max-h-50 flex flex-col gap-1 pr-1 custom-scrollbar">
                             {filteredUsers.map(user => (
                                 <div 
                                     key={user.uid} 
@@ -214,9 +214,9 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                                     className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedUsers.includes(user.uid) ? 'bg-[#FFD600]/10 border border-[#FFD600]/30' : 'hover:bg-[#333] border border-transparent'}`}
                                 >
                                     {selectedUsers.includes(user.uid) ? (
-                                        <CheckSquare size={20} className="text-[#FFD600] shrink-0" weight="fill" />
+                                        <CheckSquareIcon size={20} className="text-[#FFD600] shrink-0" weight="fill" />
                                     ) : (
-                                        <Square size={20} className="text-[#555] shrink-0" />
+                                        <SquareIcon size={20} className="text-[#555] shrink-0" />
                                     )}
                                     <span className={`text-sm truncate ${selectedUsers.includes(user.uid) ? 'text-white font-medium' : 'text-[#a0a0a0]'}`}>
                                         {user.nome || "Sem Nome"}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeftIcon, ArrowDownLeftIcon, ArrowUpRightIcon, CalendarBlankIcon, WalletIcon } from '@phosphor-icons/react';
+import { ArrowDownLeftIcon, ArrowUpRightIcon, CalendarBlankIcon, WalletIcon } from '@phosphor-icons/react';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import type { UserProfile } from '../types';
@@ -18,7 +18,7 @@ interface StatementPageProps {
     onBack: () => void;
 }
 
-const StatementPage: React.FC<StatementPageProps> = ({ user, onBack }) => {
+const StatementPage: React.FC<StatementPageProps> = ({ user }) => {
     const [transactions, setTransactions] = useState<StatementItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -86,12 +86,6 @@ const StatementPage: React.FC<StatementPageProps> = ({ user, onBack }) => {
         <div className="w-full max-w-lg mx-auto pb-10">
             {/* Header com Navegação */}
             <header className="flex items-center gap-4 p-6 border-b border-[#333] sticky top-0 bg-[#121212] z-10">
-                <button 
-                    onClick={onBack}
-                    className="p-2 -ml-2 rounded-full hover:bg-[#333] transition-colors text-[#a0a0a0] hover:text-white cursor-pointer"
-                >
-                    <ArrowLeftIcon size={24} />
-                </button>
                 <h1 className="text-xl font-bold text-white">Extrato</h1>
             </header>
 
