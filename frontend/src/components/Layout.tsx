@@ -74,9 +74,9 @@ const Layout: React.FC<LayoutProps> = ({ children, user, activePage, onNavigate 
                                 )}
                                 <button
                                     onClick={() => onNavigate(item.id)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left group ${activePage === item.id
-                                        ? 'bg-falcons-gold text-falcons-bg font-bold shadow-[0_0_15px_rgba(255,214,0,0.1)]'
-                                        : 'text-falcons-text-secondary hover:bg-falcons-bg-elevated hover:text-white'
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left group cursor-pointer ${activePage === item.id
+                                        ? 'bg-[#FFD600] text-[#1A1A1A] font-bold shadow-[0_0_20px_rgba(255,214,0,0.3)] scale-[1.02]'
+                                        : 'text-[#a0a0a0] hover:bg-[#333] hover:text-white hover:pl-5'
                                         }`}
                                 >
                                     {React.cloneElement(item.icon as React.ReactElement<IconProps>, {
@@ -103,7 +103,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, activePage, onNavigate 
 
                     <button
                         onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-falcons-error hover:bg-falcons-error/10 transition-colors text-sm w-full text-left"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-falcons-error hover:bg-falcons-error/10 transition-colors text-sm w-full text-left cursor-pointer hover:shadow-lg active:scale-95"
                     >
                         <SignOut size={20} />
                         <span>Sair</span>
@@ -120,9 +120,9 @@ const Layout: React.FC<LayoutProps> = ({ children, user, activePage, onNavigate 
                         <button
                             key={item.id}
                             onClick={() => onNavigate(item.id)}
-                            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activePage === item.id
+                            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors cursor-pointer ${activePage === item.id
                                 ? 'text-falcons-gold'
-                                : 'text-falcons-text-secondary active:scale-95'
+                                : 'text-falcons-text-secondary active:scale-95 hover:text-white'
                                 }`}
                         >
                             {React.cloneElement(item.icon as React.ReactElement<IconProps>, {
@@ -137,7 +137,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, activePage, onNavigate 
                     {isAdmin && (
                         <button
                             onClick={handleMobileSwitch}
-                            className="flex flex-col items-center justify-center w-full h-full gap-1 text-falcons-text-secondary hover:text-white active:scale-95 border-l border-falcons-border/50 ml-1"
+                            className="flex flex-col items-center justify-center w-full h-full gap-1 text-falcons-text-secondary hover:text-white active:scale-95 border-l border-falcons-border/50 ml-1 cursor-pointer"
                         >
                             <Swap size={22} />
                             <span className="text-[10px] font-medium truncate">

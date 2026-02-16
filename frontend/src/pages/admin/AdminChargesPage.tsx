@@ -19,7 +19,7 @@ const AdminChargesPage: React.FC = () => {
                     <p className="text-sm text-[#a0a0a0] mt-1">Crie lançamentos para todo o time ou atletas específicos.</p>
                 </div>
                 <button
-                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#FFD600] text-[#1A1A1A] px-6 py-3 rounded-xl font-bold hover:bg-[#e6c200] transition-colors active:scale-[0.98]"
+                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#FFD600] text-[#1A1A1A] px-6 py-3 rounded-xl font-bold hover:bg-[#e6c200] transition-all active:scale-[0.98] cursor-pointer shadow-lg hover:shadow-[#FFD600]/40"
                     onClick={() => setIsCreateChargeModalOpen(true)}
                 >
                     <PlusIcon size={20} weight="bold" />
@@ -35,7 +35,7 @@ const AdminChargesPage: React.FC = () => {
             {/* Botão DEV (Mudei pra cá pois é relacionado a gerar dados) */}
             <div className="mt-4 pt-4 border-t border-[#333]">
                 <button
-                    onClick={() => semearDadosTeste("SEU_UID_AQUI_OU_AUTOMATICO")} 
+                    onClick={() => semearDadosTeste("SEU_UID_AQUI_OU_AUTOMATICO")}
                     className="text-xs text-[#555] hover:text-red-500 transition-colors"
                 >
                     [DEV] Semear Dados de Teste
@@ -43,7 +43,7 @@ const AdminChargesPage: React.FC = () => {
             </div>
 
             {isCreateChargeModalOpen && (
-                <CreateChargeModal 
+                <CreateChargeModal
                     onClose={() => setIsCreateChargeModalOpen(false)}
                     onSuccess={() => {
                         alert("Cobranças criadas e enviadas para os atletas!");

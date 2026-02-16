@@ -39,7 +39,7 @@ const AdminAthletesPage: React.FC = () => {
                     <p className="text-[#a0a0a0]">Gerenciar elenco e saldos.</p>
                 </div>
                 <button
-                    className="flex items-center gap-2 bg-[#333] border border-[#555] text-white px-4 py-2 rounded-lg font-bold hover:bg-[#444] transition-colors active:scale-[0.98]"
+                    className="flex items-center gap-2 bg-[#FFD600] text-[#1A1A1A] px-6 py-3 rounded-xl font-bold hover:bg-[#e6c200] transition-all active:scale-[0.98] cursor-pointer shadow-lg hover:shadow-[#FFD600]/40"
                     onClick={() => setIsModalOpen(true)}
                 >
                     <PlusIcon size={20} weight="bold" />
@@ -80,7 +80,7 @@ const AdminAthletesPage: React.FC = () => {
                     onAthleteAdded={() => {
                         console.log("Atleta cadastrado!");
                         // Idealmente chamar o fetchAthletes() aqui novamente
-                        window.location.reload(); 
+                        window.location.reload();
                     }}
                 />
             )}

@@ -51,22 +51,22 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
             <div className="flex flex-col gap-3">
                 <button
                     onClick={() => setIsChangingPass(true)}
-                    className="flex items-center gap-3 p-4 bg-falcons-surface rounded-xl border border-falcons-border-dark hover:border-falcons-gold transition-colors text-left group"
+                    className="flex items-center gap-3 p-4 bg-[#333] rounded-xl border border-[#444] hover:border-[#FFD600] transition-all text-left group cursor-pointer shadow-sm hover:shadow-lg hover:shadow-[#FFD600]/10 active:scale-[0.99]"
                 >
-                    <div className="p-2 bg-falcons-input rounded-lg group-hover:bg-falcons-gold group-hover:text-black transition-colors">
+                    <div className="p-2 bg-[#252525] rounded-lg group-hover:bg-[#FFD600] group-hover:text-[#1A1A1A] transition-colors text-white">
                         <PasswordIcon size={24} />
                     </div>
-                    <span className="font-medium text-white">Alterar Senha</span>
+                    <span className="font-bold text-white group-hover:text-[#FFD600] transition-colors">Alterar Senha</span>
                 </button>
 
                 <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 p-4 bg-falcons-surface rounded-xl border border-falcons-border-dark hover:border-red-500 transition-colors text-left group mt-4"
+                    className="flex items-center gap-3 p-4 bg-[#333] rounded-xl border border-[#444] hover:border-[#FF5555] transition-all text-left group mt-4 cursor-pointer shadow-sm hover:shadow-lg hover:shadow-[#FF5555]/10 active:scale-[0.99]"
                 >
-                    <div className="p-2 bg-falcons-input rounded-lg group-hover:bg-red-500 group-hover:text-white transition-colors text-red-500">
+                    <div className="p-2 bg-[#252525] rounded-lg group-hover:bg-[#FF5555] group-hover:text-white transition-colors text-white">
                         <SignOutIcon size={24} />
                     </div>
-                    <span className="font-medium text-white group-hover:text-red-500">Sair da Conta</span>
+                    <span className="font-bold text-white group-hover:text-[#FF5555] transition-colors">Sair da Conta</span>
                 </button>
             </div>
         </div>
