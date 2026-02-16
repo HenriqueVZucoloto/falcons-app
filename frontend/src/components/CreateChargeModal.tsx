@@ -14,7 +14,7 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     // Dados da Cobrança
     const [titulo, setTitulo] = useState('');
     const [valorDisplay, setValorDisplay] = useState('');
@@ -76,7 +76,7 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
     // 3. Envio em Lote (Batch Write)
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!titulo || valorRaw <= 0 || !dataVencimento) {
             alert("Preencha todos os campos corretamente.");
             return;
@@ -89,7 +89,7 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
         setIsLoading(true);
         try {
             const batch = writeBatch(db); // Cria o lote
-            
+
             // Converte a data string (YYYY-MM-DD) para Timestamp
             const [ano, mes, dia] = dataVencimento.split('-').map(Number);
             const dataVencimentoTimestamp = Timestamp.fromDate(new Date(ano, mes - 1, dia));
@@ -120,16 +120,16 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
         }
     };
 
-    const filteredUsers = users.filter(u => 
+    const filteredUsers = users.filter(u =>
         u.nome.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const isAllSelected = filteredUsers.length > 0 && selectedUsers.length === filteredUsers.length;
 
     return (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 ${isClosing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`} onClick={handleStartClose}>
-            <div className={`w-full max-w-2xl bg-[#252525] rounded-2xl shadow-2xl flex flex-col max-h-[90vh] ${isClosing ? 'scale-95' : 'scale-100'} transition-transform duration-300`} onClick={e => e.stopPropagation()}>
-                
+        <div className={`fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/70 ${isClosing ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`} onClick={handleStartClose}>
+            <div className={`w-full h-full md:h-auto md:max-h-[90vh] max-w-2xl bg-[#252525] md:rounded-2xl shadow-2xl flex flex-col ${isClosing ? 'animate-[slideDown_0.3s_ease-in_forwards]' : 'animate-[slideUp_0.3s_ease-out_forwards]'} md:animate-none`} onClick={e => e.stopPropagation()}>
+
                 {/* Header */}
                 <header className="flex justify-between items-center p-6 border-b border-[#333]">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -140,14 +140,14 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                 </header>
 
                 <div className="flex-1 overflow-y-auto p-6 flex flex-col md:flex-row gap-6">
-                    
+
                     {/* Coluna Esquerda: Dados da Cobrança */}
                     <div className="flex-1 flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
                             <label className="text-sm text-[#a0a0a0]">Título da Cobrança</label>
-                            <input 
-                                type="text" 
-                                placeholder="Ex: Mensalidade Maio" 
+                            <input
+                                type="text"
+                                placeholder="Ex: Mensalidade Maio"
                                 className="bg-[#333] border border-[#444] p-3 rounded-xl text-white outline-none focus:border-[#FFD600]"
                                 value={titulo}
                                 onChange={e => setTitulo(e.target.value)}
@@ -156,8 +156,8 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
 
                         <div className="flex flex-col gap-2">
                             <label className="text-sm text-[#a0a0a0]">Valor (R$)</label>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 inputMode="numeric"
                                 placeholder="0,00"
                                 value={valorDisplay}
@@ -170,8 +170,8 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                             <label className="text-sm text-[#a0a0a0]">Data de Vencimento</label>
                             <div className="relative">
                                 <CalendarBlankIcon size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0a0a0]" />
-                                <input 
-                                    type="date" 
+                                <input
+                                    type="date"
                                     className="w-full bg-[#333] border border-[#444] p-3 pl-10 rounded-xl text-white outline-none focus:border-[#FFD600]"
                                     value={dataVencimento}
                                     onChange={e => setDataVencimento(e.target.value)}
@@ -186,9 +186,9 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                             <span className="text-sm font-semibold text-white flex items-center gap-2">
                                 <UsersIcon size={18} /> Atletas ({selectedUsers.length})
                             </span>
-                            <button 
-                                type="button" 
-                                onClick={toggleSelectAll} 
+                            <button
+                                type="button"
+                                onClick={toggleSelectAll}
                                 className="text-xs text-[#FFD600] hover:underline cursor-pointer"
                             >
                                 {isAllSelected ? "Desmarcar Todos" : "Selecionar Todos"}
@@ -197,9 +197,9 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
 
                         <div className="relative mb-2">
                             <MagnifyingGlassIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" />
-                            <input 
-                                type="text" 
-                                placeholder="Buscar atleta..." 
+                            <input
+                                type="text"
+                                placeholder="Buscar atleta..."
                                 className="w-full bg-[#252525] text-sm p-2 pl-9 rounded-lg text-white outline-none border border-[#333] focus:border-[#555]"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
@@ -208,8 +208,8 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
 
                         <div className="flex-1 overflow-y-auto max-h-50 flex flex-col gap-1 pr-1 custom-scrollbar">
                             {filteredUsers.map(user => (
-                                <div 
-                                    key={user.uid} 
+                                <div
+                                    key={user.uid}
                                     onClick={() => toggleUser(user.uid)}
                                     className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedUsers.includes(user.uid) ? 'bg-[#FFD600]/10 border border-[#FFD600]/30' : 'hover:bg-[#333] border border-transparent'}`}
                                 >
@@ -231,8 +231,8 @@ const CreateChargeModal: React.FC<CreateChargeModalProps> = ({ onClose, onSucces
                     <button onClick={handleStartClose} className="px-6 py-3 rounded-xl text-white hover:bg-[#333] transition-colors cursor-pointer">
                         Cancelar
                     </button>
-                    <button 
-                        onClick={handleSubmit} 
+                    <button
+                        onClick={handleSubmit}
                         disabled={isLoading}
                         className="px-6 py-3 bg-[#FFD600] text-[#1A1A1A] font-bold rounded-xl hover:bg-[#e6c200] transition-colors disabled:opacity-50 cursor-pointer"
                     >

@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase/firestore';
+
 export type UserRole = 'admin' | 'atleta';
 
 export interface UserProfile {
@@ -16,7 +18,7 @@ export interface Cobranca {
   atletaId: string;
   titulo: string;
   valor: number;
-  dataVencimento: any; // Timestamp do Firebase
+  dataVencimento: Timestamp; // Timestamp do Firebase
   status: 'pendente' | 'paga' | 'futura' | 'processando';
 }
 
@@ -29,12 +31,12 @@ export interface Payment {
   atletaNome: string;
   tituloCobranca: string;
   tipo: 'adicao_saldo' | 'pagamento_cobranca';
-  cobrancaId?: string; 
+  cobrancaId?: string;
   valorTotal: number;    // Substituindo 'valor'
-  valorPix: number;      
-  valorSaldo: number;    
+  valorPix: number;
+  valorSaldo: number;
   statusPagamento: PaymentStatus;
   motivoRejeicao?: string;
   urlComprovante?: string;
-  dataEnvio: any;
+  dataEnvio: Timestamp;
 }

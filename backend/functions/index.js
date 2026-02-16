@@ -1,47 +1,60 @@
 // backend/functions/index.js
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
-const { getAuth } = require("firebase-admin/auth");
+const {getFirestore} = require("firebase-admin/firestore");
+const {getAuth} = require("firebase-admin/auth");
 
 admin.initializeApp();
 const db = getFirestore();
 const authAdmin = getAuth();
 
+// --- HELPERS ---
+
+/**
+ * Verifica se o usuário está autenticado.
+ * @param {Object} request - O objeto request da Cloud Function.
+ * @return {Object} O objeto auth do usuário.
+ */
+function verifyAuth(request) {
+  if (!request.auth) {
+    throw new HttpsError(
+        "unauthenticated",
+        "Você precisa estar logado para executar esta ação.",
+    );
+  }
+  return request.auth;
+}
+
+/**
+ * Verifica se o usuário tem permissão de administrador.
+ * @param {string} uid - O UID do usuário.
+ * @return {Promise<void>}
+ */
+async function verifyAdmin(uid) {
+  const userDoc = await db.collection("usuarios").doc(uid).get();
+  if (!userDoc.exists || !userDoc.data().roles.includes("admin")) {
+    throw new HttpsError(
+        "permission-denied",
+        "Acesso restrito a administradores.",
+    );
+  }
+}
+
+// --- FUNÇÕES ---
+
 exports.createAthlete = onCall(async (request) => {
-  const auth = request.auth;
-  const data = request.data;
+  const auth = verifyAuth(request);
+  await verifyAdmin(auth.uid);
 
-  // 1. VERIFICAÇÃO DE SEGURANÇA
-  if (!auth) {
+  const {nome, apelido, email, password} = request.data;
+
+  // VALIDAÇÃO DOS DADOS
+  if (!email || !email.endsWith("@usp.br") || !nome || !apelido ||
+    !password || password.length < 6) {
     throw new HttpsError(
-      "unauthenticated",
-      "Você precisa estar logado para criar um usuário."
-    );
-  }
-
-  // 2. VERIFICAÇÃO DE AUTORIZAÇÃO (Admin)
-  const adminDocRef = db.collection("usuarios").doc(auth.uid);
-  const adminDoc = await adminDocRef.get();
-
-  if (!adminDoc.exists || !adminDoc.data().roles.includes("admin")) {
-    throw new HttpsError(
-      "permission-denied",
-      "Você não tem permissão para executar esta ação."
-    );
-  }
-
-  // 3. CAPTURA DOS DADOS (Incluindo o novo campo 'apelido')
-  // A senha virá como 'falcons2026' enviada pelo frontend
-  const { nome, apelido, email, password } = data;
-
-  // 4. VALIDAÇÃO DOS DADOS
-  // Adicionamos a validação para o campo apelido
-  if (!email || !email.endsWith("@usp.br") || !nome || !apelido || !password || password.length < 6) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Dados inválidos. Verifique o e-mail (@usp.br), nome, apelido e senha."
+        "invalid-argument",
+        "Dados inválidos. Verifique o e-mail (@usp.br), nome, apelido e senha.",
     );
   }
 
@@ -53,42 +66,36 @@ exports.createAthlete = onCall(async (request) => {
       displayName: nome,
     });
 
-    // 6. CRIAÇÃO DO DOCUMENTO NO FIRESTORE
+    // CRIAÇÃO DO DOCUMENTO NO FIRESTORE
     await db.collection("usuarios").doc(userRecord.uid).set({
       nome: nome,
-      apelido: apelido, // Agora salvamos o apelido do atleta
+      apelido: apelido,
       email: email,
       saldo: 0,
       roles: ["atleta"],
-      precisaMudarSenha: true, // Mantemos o flag para o futuro "force change"
+      precisaMudarSenha: true,
       dataCriacao: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     return {
       status: "success",
       message: `Atleta ${apelido} criado com sucesso!`,
-      uid: userRecord.uid
+      uid: userRecord.uid,
     };
-
   } catch (error) {
     console.error("Erro ao criar usuário:", error);
     throw new HttpsError(
-      "internal",
-      `Erro ao criar usuário: ${error.message}`
+        "internal",
+        `Erro ao criar usuário: ${error.message}`,
     );
   }
 });
 
 exports.processarPagamento = onCall(async (request) => {
-  const { pagamentoId, acao, motivo } = request.data;
-  const auth = request.auth;
+  const auth = verifyAuth(request);
+  await verifyAdmin(auth.uid);
 
-  // Verificação de Admin
-  const adminDoc = await db.collection("usuarios").doc(auth.uid).get();
-  if (!adminDoc.exists || !adminDoc.data().roles.includes("admin")) {
-    throw new HttpsError("permission-denied", "Acesso restrito a administradores.");
-  }
-
+  const {pagamentoId, acao, motivo} = request.data;
   const pagRef = db.collection("pagamentos").doc(pagamentoId);
   const pagSnap = await pagRef.get();
 
@@ -98,61 +105,60 @@ exports.processarPagamento = onCall(async (request) => {
 
   const pagData = pagSnap.data();
 
-  // Ação de Rejeitar: Apenas sinaliza e libera o saldo "preso" (pois não foi descontado)
-  if (acao === 'rejeitar') {
+  // Ação de Rejeitar
+  if (acao === "rejeitar") {
     const batch = db.batch();
 
-    // Marca o pagamento como rejeitado
     batch.update(pagRef, {
-      statusPagamento: 'rejeitado',
+      statusPagamento: "rejeitado",
       motivoRejeicao: motivo || "Comprovante inválido.",
-      dataProcessamento: admin.firestore.FieldValue.serverTimestamp()
+      dataProcessamento: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // FAZ A COBRANÇA VOLTAR: Se houver uma cobrança vinculada, ela volta a ficar pendente
     if (pagData.cobrancaId) {
       const cobRef = db.collection("cobrancas").doc(pagData.cobrancaId);
-      batch.update(cobRef, { status: "pendente" });
+      batch.update(cobRef, {status: "pendente"});
     }
 
     await batch.commit();
-    return { status: "success", message: "Pagamento rejeitado e cobrança restaurada." };
+    return {
+      status: "success",
+      message: "Pagamento rejeitado e cobrança restaurada.",
+    };
   }
 
   // Ação de Aprovar
   const batch = db.batch();
   const userRef = db.collection("usuarios").doc(pagData.atletaId);
 
-  if (pagData.tipo === 'adicao_saldo') {
-    // Aumenta o saldo real com o valor do PIX aprovado
-    batch.update(userRef, { saldo: admin.firestore.FieldValue.increment(pagData.valorPix) });
-  } else if (pagData.tipo === 'pagamento_cobranca') {
-    // Marca a cobrança como paga
+  if (pagData.tipo === "adicao_saldo") {
+    batch.update(userRef, {
+      saldo: admin.firestore.FieldValue.increment(pagData.valorPix),
+    });
+  } else if (pagData.tipo === "pagamento_cobranca") {
     if (pagData.cobrancaId) {
       const cobRef = db.collection("cobrancas").doc(pagData.cobrancaId);
-      batch.update(cobRef, { status: 'paga' });
+      batch.update(cobRef, {status: "paga"});
     }
-    // Desconta o saldo real se houve uso de saldo (misto ou total)
     if (pagData.valorSaldo > 0) {
-      batch.update(userRef, { saldo: admin.firestore.FieldValue.increment(-pagData.valorSaldo) });
+      batch.update(userRef, {
+        saldo: admin.firestore.FieldValue.increment(-pagData.valorSaldo),
+      });
     }
   }
 
   batch.update(pagRef, {
-    statusPagamento: 'aprovado',
-    dataProcessamento: admin.firestore.FieldValue.serverTimestamp()
+    statusPagamento: "aprovado",
+    dataProcessamento: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   await batch.commit();
-  return { status: "success", message: "Pagamento aprovado e saldo atualizado!" };
+  return {status: "success", message: "Pagamento aprovado e saldo atualizado!"};
 });
 
-// Pagamento 100% Saldo (Automático)
 exports.pagarComSaldoTotal = onCall(async (request) => {
-  const { cobrancaId } = request.data;
-  const auth = request.auth;
-  if (!auth) throw new HttpsError("unauthenticated", "Login necessário.");
-
+  const auth = verifyAuth(request);
+  const {cobrancaId} = request.data;
   const userRef = db.collection("usuarios").doc(auth.uid);
   const cobRef = db.collection("cobrancas").doc(cobrancaId);
 
@@ -160,43 +166,54 @@ exports.pagarComSaldoTotal = onCall(async (request) => {
     const userDoc = await transaction.get(userRef);
     const cobDoc = await transaction.get(cobRef);
 
-    if (!cobDoc.exists) throw new HttpsError("not-found", "Cobrança não encontrada.");
+    if (!cobDoc.exists) {
+      throw new HttpsError("not-found", "Cobrança não encontrada.");
+    }
 
     const userData = userDoc.data();
     const cobData = cobDoc.data();
 
     if (userData.saldo < cobData.valor) {
-      throw new HttpsError("failed-precondition", "Saldo insuficiente para quitar esta dívida.");
+      throw new HttpsError(
+          "failed-precondition",
+          "Saldo insuficiente para quitar esta dívida.",
+      );
     }
 
-    // Debita o saldo e quita a cobrança
-    transaction.update(userRef, { saldo: admin.firestore.FieldValue.increment(-cobData.valor) });
-    transaction.update(cobRef, { status: "paga" });
+    transaction.update(userRef, {
+      saldo: admin.firestore.FieldValue.increment(-cobData.valor),
+    });
+    transaction.update(cobRef, {status: "paga"});
 
-    // Cria o histórico de pagamento JÁ APROVADO
     const pagRef = db.collection("pagamentos").doc();
     transaction.set(pagRef, {
       atletaId: auth.uid,
       atletaNome: userData.nome,
       tituloCobranca: cobData.titulo,
-      tipo: 'pagamento_cobranca',
+      tipo: "pagamento_cobranca",
       cobrancaId: cobrancaId,
       valorTotal: cobData.valor,
       valorSaldo: cobData.valor,
       valorPix: 0,
       statusPagamento: "aprovado",
       dataEnvio: admin.firestore.FieldValue.serverTimestamp(),
-      dataProcessamento: admin.firestore.FieldValue.serverTimestamp()
+      dataProcessamento: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    return { status: "success" };
+    return {status: "success"};
   });
 });
 
 exports.enviarParaAnalise = onCall(async (request) => {
-  const { cobrancaId, valorSaldo, valorPix, urlComprovante, tituloCobranca, tipo } = request.data;
-  const auth = request.auth;
-  if (!auth) throw new HttpsError("unauthenticated", "Login necessário.");
+  const auth = verifyAuth(request);
+  const {
+    cobrancaId,
+    valorSaldo,
+    valorPix,
+    urlComprovante,
+    tituloCobranca,
+    tipo,
+  } = request.data;
 
   const userDoc = await db.collection("usuarios").doc(auth.uid).get();
   const userData = userDoc.data();
@@ -204,27 +221,25 @@ exports.enviarParaAnalise = onCall(async (request) => {
   const batch = db.batch();
   const pagRef = db.collection("pagamentos").doc();
 
-  // Se for pagamento de dívida, faz a cobrança "sumir"
-  if (tipo === 'pagamento_cobranca' && cobrancaId) {
+  if (tipo === "pagamento_cobranca" && cobrancaId) {
     const cobRef = db.collection("cobrancas").doc(cobrancaId);
-    batch.update(cobRef, { status: "processando" });
+    batch.update(cobRef, {status: "processando"});
   }
 
-  // Cria o registro (Funciona para ambos os tipos)
   batch.set(pagRef, {
     atletaId: auth.uid,
     atletaNome: userData.nome,
     tituloCobranca: tituloCobranca || "Adição de Saldo",
-    tipo: tipo || 'pagamento_cobranca',
+    tipo: tipo || "pagamento_cobranca",
     cobrancaId: cobrancaId || null,
     valorTotal: (valorSaldo || 0) + (valorPix || 0),
     valorSaldo: valorSaldo || 0,
     valorPix: valorPix || 0,
     urlComprovante: urlComprovante || null,
     statusPagamento: "em análise",
-    dataEnvio: admin.firestore.FieldValue.serverTimestamp()
+    dataEnvio: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   await batch.commit();
-  return { status: "success" };
+  return {status: "success"};
 });

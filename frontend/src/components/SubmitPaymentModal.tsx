@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { XIcon, UploadSimpleIcon, WalletIcon, PixLogoIcon } from '@phosphor-icons/react';
+import { UploadSimpleIcon, WalletIcon, PixLogoIcon } from '@phosphor-icons/react';
+import Modal from './Modal';
 import { storage } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -47,11 +48,11 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
         const { raw, display } = formatCurrency(e.target.value);
 
         if (raw > valorTotalCobranca && valorTotalCobranca < saldoDisponivel) {
-             // Se passar do total da conta, trava no total
-             const totalFormatado = valorTotalCobranca.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-             setValorSaldoUtilizado(valorTotalCobranca);
-             setValorSaldoDisplay(totalFormatado);
-             return;
+            // Se passar do total da conta, trava no total
+            const totalFormatado = valorTotalCobranca.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+            setValorSaldoUtilizado(valorTotalCobranca);
+            setValorSaldoDisplay(totalFormatado);
+            return;
         }
 
         if (raw > saldoDisponivel && saldoDisponivel < valorTotalCobranca) {
@@ -111,66 +112,64 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
             }
 
             handleStartClose();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            setError(err.message || "Erro ao processar pagamento.");
+            const errorMessage = err instanceof Error ? err.message : "Erro ao processar pagamento.";
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className={`fixed inset-0 z-50 flex flex-col bg-[#1A1A1A] transition-opacity duration-300 md:items-center md:justify-center p-0 md:p-4 ${isClosing ? 'opacity-0 md:bg-black/0' : 'opacity-100 md:bg-black/70'}`} onClick={handleStartClose}>
-            <div className={`w-full h-full bg-[#1A1A1A] flex flex-col md:h-auto md:max-w-125 md:bg-[#252525] md:rounded-2xl shadow-2xl ${isClosing ? 'animate-[slideDown_0.3s_ease-in_forwards]' : 'animate-[slideUp_0.3s_ease-out_forwards]'} md:animate-none`} onClick={(e) => e.stopPropagation()}>
-                <header className="flex justify-between items-center p-6 border-b border-[#333]">
-                    <h2 className="text-xl font-bold text-white">Pagamento: {paymentItem.name}</h2>
-                    <button onClick={handleStartClose} className="text-[#a0a0a0] cursor-pointer hover:text-white"><XIcon size={24} /></button>
-                </header>
+        <Modal
+            isOpen={!isClosing}
+            onClose={handleStartClose}
+            title={`Pagamento: ${paymentItem.name}`}
+        >
+            <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+                <div className="flex justify-between items-center bg-[#333] p-4 rounded-xl border border-[#444]">
+                    <span className="text-[#a0a0a0]">Valor Total:</span>
+                    <span className="text-xl font-bold text-white">R$ {paymentItem.amount}</span>
+                </div>
 
-                <form className="p-6 flex flex-col gap-5" onSubmit={handleSubmit}>
-                    <div className="flex justify-between items-center bg-[#333] p-4 rounded-xl border border-[#444]">
-                        <span className="text-[#a0a0a0]">Valor Total:</span>
-                        <span className="text-xl font-bold text-white">R$ {paymentItem.amount}</span>
-                    </div>
+                <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold flex items-center gap-2 text-white">
+                        <WalletIcon size={18} className="text-[#FFD600]" />
+                        Usar Saldo (Disponível: R$ {saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                    </label>
+                    <input
+                        type="text" // Text para aplicar máscara
+                        inputMode="numeric"
+                        placeholder="0,00"
+                        value={valorSaldoDisplay}
+                        onChange={handleSaldoChange}
+                        className="bg-[#333] border border-[#444] p-3 rounded-xl text-white focus:border-[#FFD600] outline-none w-full"
+                    />
+                </div>
 
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-semibold flex items-center gap-2">
-                            <WalletIcon size={18} className="text-[#FFD600]" />
-                            Usar Saldo (Disponível: R$ {saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
-                        </label>
-                        <input 
-                            type="text" // Text para aplicar máscara
-                            inputMode="numeric"
-                            placeholder="0,00"
-                            value={valorSaldoDisplay}
-                            onChange={handleSaldoChange}
-                            className="bg-[#333] border border-[#444] p-3 rounded-lg text-white focus:border-[#FFD600] outline-none"
-                        />
-                    </div>
-
-                    {valorRestantePix > 0 && (
-                        <div className="flex flex-col gap-3">
-                            <div className="flex justify-between text-sm">
-                                <span className="flex items-center gap-2"><PixLogoIcon size={18} className="text-[#00BFA5]" /> Restante no PIX:</span>
-                                <span className="font-bold text-[#00BFA5]">R$ {valorRestantePix.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                            </div>
-
-                            <label htmlFor="file-upload" className="flex items-center justify-center gap-2 p-4 bg-[#333] border border-dashed border-[#555] rounded-xl text-sm cursor-pointer hover:bg-[#444] transition-colors">
-                                <UploadSimpleIcon size={20} className="text-[#FFD600]" />
-                                <span>{file ? file.name : 'Anexar comprovante do PIX'}</span>
-                            </label>
-                            <input id="file-upload" type="file" onChange={handleFileChange} className="hidden" />
+                {valorRestantePix > 0 && (
+                    <div className="flex flex-col gap-3">
+                        <div className="flex justify-between text-sm">
+                            <span className="flex items-center gap-2 text-white"><PixLogoIcon size={18} className="text-[#00BFA5]" /> Restante no PIX:</span>
+                            <span className="font-bold text-[#00BFA5]">R$ {valorRestantePix.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                         </div>
-                    )}
 
-                    {error && <p className="text-[#ffaaaa] text-xs text-center bg-red-500/10 p-2 rounded">{error}</p>}
+                        <label htmlFor="file-upload" className="flex items-center justify-center gap-2 p-5 bg-[#333] border border-dashed border-[#444] rounded-xl text-sm cursor-pointer hover:bg-[#3A3A3A] hover:border-[#FFD600] transition-colors group">
+                            <UploadSimpleIcon size={20} className="text-[#FFD600] group-hover:scale-110 transition-transform" />
+                            <span className="text-[#a0a0a0] group-hover:text-white transition-colors">{file ? file.name : 'Anexar comprovante do PIX'}</span>
+                        </label>
+                        <input id="file-upload" type="file" onChange={handleFileChange} className="hidden" />
+                    </div>
+                )}
 
-                    <button type="submit" disabled={isLoading} className="w-full p-4 mt-2 bg-[#FFD600] text-[#1A1A1A] rounded-xl font-bold text-lg cursor-pointer hover:bg-[#e6c200] transition-colors">
-                        {isLoading ? 'Processando...' : 'Confirmar Pagamento'}
-                    </button>
-                </form>
-            </div>
-        </div>
+                {error && <p className="text-[#FF5555] text-xs text-center bg-red-500/10 p-2 rounded-lg border border-red-500/20">{error}</p>}
+
+                <button type="submit" disabled={isLoading} className="w-full p-4 mt-2 bg-[#FFD600] text-[#1A1A1A] rounded-xl font-bold text-lg cursor-pointer hover:bg-[#e6c200] transition-colors active:scale-[0.98] disabled:bg-[#555] disabled:cursor-not-allowed">
+                    {isLoading ? 'Processando...' : 'Confirmar Pagamento'}
+                </button>
+            </form>
+        </Modal>
     );
 };
 
