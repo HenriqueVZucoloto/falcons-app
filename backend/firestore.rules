@@ -13,8 +13,12 @@ service cloud.firestore {
 
     function isAdmin() {
       return request.auth != null && 
-            // O segredo está no .hasAny(['valor'])
-            get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.roles.hasAny(['admin']);
+            get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.roles.hasAny(['admin', 'super_admin']);
+    }
+
+    function isSuperAdmin() {
+      return request.auth != null && 
+            get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.roles.hasAny(['super_admin']);
     }
 
     // --- Usuários ---
@@ -39,7 +43,7 @@ service cloud.firestore {
       
       allow update: if isAdmin() || (loggedIn() && resource.data.atletaId == request.auth.uid);
       allow create: if isAdmin();
-      allow delete: if false;
+      allow delete: if isSuperAdmin();
     }
 
     match /cobrancas/{cobrancaId} {
