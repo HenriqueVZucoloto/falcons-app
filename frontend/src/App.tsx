@@ -19,6 +19,7 @@ import ChangePasswordPage from './pages/ChangePasswordPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminAthletesPage from './pages/admin/AdminAthletesPage';
 import AdminChargesPage from './pages/admin/AdminChargesPage';
+import AdminManagementPage from './pages/admin/AdminManagementPage';
 
 const LoadingScreen = () => (
     <div className="flex items-center justify-center h-screen bg-[#121212] text-white">
@@ -29,7 +30,7 @@ const LoadingScreen = () => (
 function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    
+
     // Estado único de navegação (controla qual tela aparece no miolo do Layout)
     const [activePage, setActivePage] = useState<PageType>('home');
 
@@ -42,7 +43,7 @@ function App() {
                 const profile = docSnap.data() as UserProfile;
                 profile.uid = uid;
                 setUserProfile(profile);
-                
+
                 // Se o usuário for admin, podemos jogá-lo direto para o dashboard, 
                 // ou manter na home. Vamos manter na home por padrão.
                 if (profile.roles && profile.roles.includes('admin')) {
@@ -68,7 +69,7 @@ function App() {
 
     // 1. Loading
     if (isLoading) return <LoadingScreen />;
-    
+
     // 2. Login
     if (!userProfile) return <LoginPage />;
 
@@ -77,9 +78,9 @@ function App() {
         return (
             <div className="min-h-screen bg-[#121212] text-white p-8 flex items-center justify-center">
                 <div className="w-full max-w-md">
-                    <ChangePasswordPage 
-                        userUid={userProfile.uid} 
-                        onPasswordChanged={() => loadUserProfile(userProfile.uid)} 
+                    <ChangePasswordPage
+                        userUid={userProfile.uid}
+                        onPasswordChanged={() => loadUserProfile(userProfile.uid)}
                         isFirstAccess={true}
                     />
                 </div>
@@ -92,15 +93,15 @@ function App() {
         switch (activePage) {
             // --- Área do Atleta ---
             case 'home':
-                return <HomePage 
-                    user={userProfile} 
-                    onNavigateToStatement={() => setActivePage('statement')} 
+                return <HomePage
+                    user={userProfile}
+                    onNavigateToStatement={() => setActivePage('statement')}
                 />;
             case 'statement':
                 return <StatementPage user={userProfile} onBack={() => setActivePage('home')} />;
             case 'profile':
                 return <ProfilePage user={userProfile} />;
-            
+
             // --- Área do Admin ---
             case 'admin_dashboard':
                 return <AdminDashboardPage />;
@@ -108,11 +109,13 @@ function App() {
                 return <AdminAthletesPage />;
             case 'admin_charges':
                 return <AdminChargesPage />;
-            
+            case 'admin_management':
+                return <AdminManagementPage user={userProfile} />;
+
             default:
-                return <HomePage 
-                    user={userProfile} 
-                    onNavigateToStatement={() => setActivePage('statement')} 
+                return <HomePage
+                    user={userProfile}
+                    onNavigateToStatement={() => setActivePage('statement')}
                 />;
         }
     };

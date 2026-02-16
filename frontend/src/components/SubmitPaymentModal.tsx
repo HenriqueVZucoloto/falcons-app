@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { UploadSimpleIcon, WalletIcon, PixLogoIcon } from '@phosphor-icons/react';
+import { UploadSimpleIcon, WalletIcon, PixLogoIcon, CopyIcon } from '@phosphor-icons/react';
+import { generatePixCopyPaste } from '../utils/pix';
+import { FINANCE_CONFIG } from '../config/finance';
 import Modal from './Modal';
 import { storage } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -153,6 +155,44 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
                         <div className="flex justify-between text-sm">
                             <span className="flex items-center gap-2 text-white"><PixLogoIcon size={18} className="text-[#00BFA5]" /> Restante no PIX:</span>
                             <span className="font-bold text-[#00BFA5]">R$ {valorRestantePix.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        {/* PIX Copy Paste Area */}
+                        <div className="bg-[#1A1A1A] p-4 rounded-xl border border-dashed border-[#00BFA5]/50 flex flex-col items-center gap-3">
+                            <p className="text-[#a0a0a0] text-xs text-center">
+                                Copie o código abaixo para pagar <strong>R$ {valorRestantePix.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                            </p>
+                            <div className="w-full flex gap-2">
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={generatePixCopyPaste(
+                                        FINANCE_CONFIG.PIX_KEY,
+                                        FINANCE_CONFIG.PIX_MERCHANT_NAME,
+                                        FINANCE_CONFIG.PIX_MERCHANT_CITY,
+                                        valorRestantePix,
+                                        `${FINANCE_CONFIG.PIX_TXID_PREFIX}-PGT-${paymentItem.id.substring(0, 4)}`
+                                    )}
+                                    className="w-full bg-black/30 border border-[#333] rounded-lg px-3 py-2 text-xs text-[#777] font-mono truncate"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(generatePixCopyPaste(
+                                            FINANCE_CONFIG.PIX_KEY,
+                                            FINANCE_CONFIG.PIX_MERCHANT_NAME,
+                                            FINANCE_CONFIG.PIX_MERCHANT_CITY,
+                                            valorRestantePix,
+                                            `${FINANCE_CONFIG.PIX_TXID_PREFIX}-PGT-${paymentItem.id.substring(0, 4)}`
+                                        ));
+                                        alert("Código PIX copiado!");
+                                    }}
+                                    className="bg-[#00BFA5] text-[#1A1A1A] p-2 rounded-lg font-bold hover:bg-[#00A08A] transition-colors cursor-pointer"
+                                    title="Copiar"
+                                >
+                                    <CopyIcon size={20} />
+                                </button>
+                            </div>
                         </div>
 
                         <label htmlFor="file-upload" className="flex items-center justify-center gap-2 p-5 bg-[#333] border border-dashed border-[#444] rounded-xl text-sm cursor-pointer hover:bg-[#3A3A3A] hover:border-[#FFD600] transition-colors group">

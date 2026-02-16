@@ -20,12 +20,18 @@ interface StatementPageProps {
 
 const StatementPage: React.FC<StatementPageProps> = ({ user }) => {
     const [transactions, setTransactions] = useState<StatementItem[]>([]);
+    const [filteredTransactions, setFilteredTransactions] = useState<StatementItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Estados dos Filtros
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterType, setFilterType] = useState<'all' | 'entry' | 'exit'>('all');
+    const [filterDate, setFilterDate] = useState<'all' | '30days' | '90days'>('all');
 
     useEffect(() => {
         const fetchStatement = async () => {
             if (!user.uid) return;
-            
+
             try {
                 // Busca todos os pagamentos/movimentações do usuário que foram APROVADOS
                 const q = query(
@@ -54,7 +60,7 @@ const StatementPage: React.FC<StatementPageProps> = ({ user }) => {
                             method: 'pix'
                         });
                     }
-                    
+
                     // Lógica 2: Pagamento de Cobrança (Saída)
                     else if (data.tipo === 'pagamento_cobranca') {
                         // Se usou saldo, registra a saída
@@ -72,6 +78,7 @@ const StatementPage: React.FC<StatementPageProps> = ({ user }) => {
                 });
 
                 setTransactions(items);
+                setFilteredTransactions(items);
             } catch (error) {
                 console.error("Erro ao buscar extrato:", error);
             } finally {
@@ -81,6 +88,32 @@ const StatementPage: React.FC<StatementPageProps> = ({ user }) => {
 
         fetchStatement();
     }, [user.uid]);
+
+    // Efeito de Filtragem
+    useEffect(() => {
+        let result = transactions;
+
+        // 1. Busca por Texto
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            result = result.filter(t => t.title.toLowerCase().includes(term));
+        }
+
+        // 2. Filtro por Tipo
+        if (filterType !== 'all') {
+            result = result.filter(t => t.type === filterType);
+        }
+
+        // 3. Filtro por Data
+        if (filterDate !== 'all') {
+            const now = new Date();
+            const daysAgo = filterDate === '30days' ? 30 : 90;
+            const limitDate = new Date(now.setDate(now.getDate() - daysAgo));
+            result = result.filter(t => t.date >= limitDate);
+        }
+
+        setFilteredTransactions(result);
+    }, [searchTerm, filterType, filterDate, transactions]);
 
     return (
         <div className="w-full max-w-lg mx-auto pb-10">
@@ -101,8 +134,55 @@ const StatementPage: React.FC<StatementPageProps> = ({ user }) => {
                     </h2>
                 </div>
 
+                {/* --- ÁREA DE FILTROS (Novo) --- */}
+                <div className="flex flex-col gap-3 mb-6">
+                    {/* Busca */}
+                    <input
+                        type="text"
+                        placeholder="Buscar transação..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-[#333] border border-[#444] rounded-xl p-3 text-white placeholder-[#777] focus:border-[#FFD600] outline-none transition-colors"
+                    />
+
+                    {/* Filtros de Tipo */}
+                    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                        <button
+                            onClick={() => setFilterType('all')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filterType === 'all' ? 'bg-[#FFD600] text-[#1A1A1A]' : 'bg-[#252525] text-[#a0a0a0] hover:bg-[#333]'}`}
+                        >
+                            Todos
+                        </button>
+                        <button
+                            onClick={() => setFilterType('entry')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filterType === 'entry' ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 'bg-[#252525] text-[#a0a0a0] hover:bg-[#333]'}`}
+                        >
+                            Entradas
+                        </button>
+                        <button
+                            onClick={() => setFilterType('exit')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filterType === 'exit' ? 'bg-red-500/20 text-red-500 border border-red-500/50' : 'bg-[#252525] text-[#a0a0a0] hover:bg-[#333]'}`}
+                        >
+                            Saídas
+                        </button>
+                    </div>
+
+                    {/* Filtro de Data (Opcional, mas estava no plano) */}
+                    <div className="flex gap-2">
+                        <select
+                            value={filterDate}
+                            onChange={(e) => setFilterDate(e.target.value as 'all' | '30days' | '90days')}
+                            className="bg-[#252525] text-[#a0a0a0] text-sm p-2 rounded-lg border border-[#333] outline-none focus:border-[#444]"
+                        >
+                            <option value="all">Todo o período</option>
+                            <option value="30days">Últimos 30 dias</option>
+                            <option value="90days">Últimos 90 dias</option>
+                        </select>
+                    </div>
+                </div>
+
                 <h3 className="text-sm font-bold text-[#a0a0a0] mb-4 uppercase tracking-wider flex items-center gap-2">
-                    <CalendarBlankIcon size={16} /> Histórico Recente
+                    <CalendarBlankIcon size={16} /> Histórico {filterType !== 'all' ? 'Filtrado' : 'Recente'}
                 </h3>
 
                 {/* Lista de Transações */}
@@ -112,15 +192,15 @@ const StatementPage: React.FC<StatementPageProps> = ({ user }) => {
                             <div key={i} className="h-20 bg-[#252525] rounded-xl animate-pulse border border-[#333]" />
                         ))}
                     </div>
-                ) : transactions.length === 0 ? (
+                ) : filteredTransactions.length === 0 ? (
                     <div className="text-center py-12 text-[#555]">
-                        <p>Nenhuma movimentação encontrada.</p>
+                        <p>Nenhuma movimentação encontrada com esses filtros.</p>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-3">
-                        {transactions.map((item) => (
-                            <div 
-                                key={item.id} 
+                        {filteredTransactions.map((item) => (
+                            <div
+                                key={item.id}
                                 className="flex items-center justify-between bg-[#252525] p-4 rounded-xl border border-[#333] hover:border-[#444] transition-colors"
                             >
                                 <div className="flex items-center gap-4">
