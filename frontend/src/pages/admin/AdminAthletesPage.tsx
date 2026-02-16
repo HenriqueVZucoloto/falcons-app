@@ -55,14 +55,14 @@ const AdminAthletesPage: React.FC = () => {
                         {athletes.map(athlete => (
                             <div
                                 key={athlete.uid}
-                                className="flex justify-between items-center w-full bg-[#333] p-4 px-6 rounded-xl border border-[#444] hover:border-[#FFD600] transition-all group"
+                                className="flex flex-col md:flex-row justify-between items-start md:items-center w-full bg-[#333] p-4 px-6 rounded-xl border border-[#444] hover:border-[#FFD600] transition-all group gap-4 md:gap-0"
                             >
                                 <div className="flex flex-col text-left">
                                     <span className="font-semibold text-white text-lg group-hover:text-[#FFD600]">{athlete.nome || 'Sem Nome'}</span>
                                     <span className="text-sm text-[#a0a0a0]">{athlete.email || 'Sem E-mail'}</span>
                                 </div>
 
-                                <div className="flex flex-col items-end">
+                                <div className="flex flex-col items-start md:items-end w-full md:w-auto border-t border-[#444] md:border-none pt-2 md:pt-0 mt-2 md:mt-0">
                                     <span className="text-[10px] text-[#a0a0a0] uppercase tracking-widest">Saldo Atual</span>
                                     <span className={`font-bold text-xl ${athlete.saldo && athlete.saldo < 0 ? 'text-red-500' : 'text-[#FFD600]'}`}>
                                         R$ {(athlete.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
