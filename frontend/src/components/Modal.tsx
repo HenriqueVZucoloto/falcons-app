@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { XIcon } from '@phosphor-icons/react';
 
 export interface ModalProps {

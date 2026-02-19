@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { PlusIcon } from '@phosphor-icons/react';
 import CreateChargeModal from '../../components/CreateChargeModal';
-import { semearDadosTeste } from '../../lib/seed';
 
 const AdminChargesPage: React.FC = () => {
     const [isCreateChargeModalOpen, setIsCreateChargeModalOpen] = useState(false);
@@ -27,19 +26,8 @@ const AdminChargesPage: React.FC = () => {
                 </button>
             </section>
 
-            {/* Placeholder para lista futura de cobranças */}
             <div className="p-10 border-2 border-dashed border-[#333] rounded-2xl text-center text-[#555]">
                 <p>O histórico de cobranças criadas aparecerá aqui em breve.</p>
-            </div>
-
-            {/* Botão DEV (Mudei pra cá pois é relacionado a gerar dados) */}
-            <div className="mt-4 pt-4 border-t border-[#333]">
-                <button
-                    onClick={() => semearDadosTeste("SEU_UID_AQUI_OU_AUTOMATICO")}
-                    className="text-xs text-[#555] hover:text-red-500 transition-colors"
-                >
-                    [DEV] Semear Dados de Teste
-                </button>
             </div>
 
             {isCreateChargeModalOpen && (

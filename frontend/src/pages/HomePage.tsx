@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { WarningIcon, TrendUpIcon, CheckCircleIcon, LockIcon, InfoIcon } from '@phosphor-icons/react';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import type { UserProfile, Payment, Cobranca } from '../types';
+import type { UserProfile, Payment, Cobranca, FormattedPayment } from '../types';
 
 import BalanceCard from '../components/BalanceCard';
 import PaymentsListCard from '../components/PaymentsListCard';
@@ -10,12 +10,7 @@ import SubmitPaymentModal from '../components/SubmitPaymentModal';
 import AnalysisListModal from '../components/AnalysisListModal';
 import AddBalanceModal from '../components/AddBalanceModal';
 
-interface FormattedPayment {
-    id: string;
-    name: string;
-    amount: string;
-    dueDate: string;
-}
+
 
 interface HomePageProps {
     user: UserProfile;
@@ -51,7 +46,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, onNavigateToStatement }) => {
         const fetchData = async () => {
             if (!user) return;
             setIsLoadingPayments(true);
-            
+
             const lateList: FormattedPayment[] = [];
             const pendingList: FormattedPayment[] = [];
             const analiseList: Payment[] = [];
@@ -61,7 +56,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, onNavigateToStatement }) => {
             try {
                 // 1. BUSCA COBRANÇAS PENDENTES
                 const qCobrancas = query(
-                    collection(db, "cobrancas"), 
+                    collection(db, "cobrancas"),
                     where("atletaId", "==", user.uid),
                     where("status", "==", "pendente")
                 );
@@ -71,7 +66,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, onNavigateToStatement }) => {
                     const data = doc.data() as Cobranca;
                     const dataVencimento = (data.dataVencimento as unknown as Timestamp).toDate();
                     const dataFormatada = dataVencimento.toLocaleDateString('pt-BR');
-                    
+
                     const formatted: FormattedPayment = {
                         id: doc.id,
                         name: data.titulo,
@@ -117,7 +112,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, onNavigateToStatement }) => {
                 <p className="text-[#a0a0a0]">Gerencie suas finanças do time</p>
             </header>
 
-            <BalanceCard 
+            <BalanceCard
                 saldo={saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 onAddBalance={() => setIsAddBalanceModalOpen(true)}
                 onViewStatement={onNavigateToStatement}
@@ -128,7 +123,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, onNavigateToStatement }) => {
             ) : (
                 <div className="flex flex-col gap-4">
                     {latePayments.length === 0 && pendingPayments.length === 0 ? (
-                        <div className="flex items-center gap-4 p-6 bg-green-500/10 border border-green-500 rounded-xl text-green-500"> 
+                        <div className="flex items-center gap-4 p-6 bg-green-500/10 border border-green-500 rounded-xl text-green-500">
                             <CheckCircleIcon size={32} />
                             <div className="flex flex-col">
                                 <strong className="text-lg font-semibold">Tudo em dia!</strong>
@@ -168,7 +163,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, onNavigateToStatement }) => {
                         <LockIcon size={20} />
                         <span>{analysisPayments.length} item(s) em análise</span>
                     </div>
-                    <button 
+                    <button
                         onClick={() => setIsAnalysisModalOpen(true)}
                         className="p-1 hover:bg-[#FFD600]/20 rounded-full transition-colors cursor-pointer"
                     >
@@ -183,18 +178,18 @@ const HomePage: React.FC<HomePageProps> = ({ user, onNavigateToStatement }) => {
             )}
 
             {selectedPayment && (
-                <SubmitPaymentModal 
-                    user={user} 
-                    paymentItem={selectedPayment} 
-                    onClose={handleClosePaymentModal} 
-                    saldoDisponivel={saldoDisponivel} 
+                <SubmitPaymentModal
+                    user={user}
+                    paymentItem={selectedPayment}
+                    onClose={handleClosePaymentModal}
+                    saldoDisponivel={saldoDisponivel}
                 />
             )}
 
             {isAnalysisModalOpen && (
-                <AnalysisListModal 
-                    payments={analysisPayments} 
-                    onClose={() => setIsAnalysisModalOpen(false)} 
+                <AnalysisListModal
+                    payments={analysisPayments}
+                    onClose={() => setIsAnalysisModalOpen(false)}
                 />
             )}
         </div>

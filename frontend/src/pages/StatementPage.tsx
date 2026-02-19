@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowDownLeftIcon, ArrowUpRightIcon, CalendarBlankIcon, WalletIcon } from '@phosphor-icons/react';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
@@ -15,7 +15,6 @@ interface StatementItem {
 
 interface StatementPageProps {
     user: UserProfile;
-    onBack: () => void;
 }
 
 const StatementPage: React.FC<StatementPageProps> = ({ user }) => {

@@ -1,6 +1,5 @@
 // frontend/src/components/PaymentsListCard.tsx
 
-import React from 'react';
 import { ClockIcon } from '@phosphor-icons/react';
 
 // Interface para garantir que os itens da lista tenham o formato correto
@@ -20,14 +19,14 @@ interface PaymentsListCardProps {
 }
 
 const PaymentsListCard: React.FC<PaymentsListCardProps> = ({ type, title, icon, list, onItemClick }) => {
-    
+
     if (list.length === 0) return null;
 
     // Configurações dinâmicas baseadas no tipo (late vs pending)
     const isLate = type === 'late';
-    
-    const cardStyles = isLate 
-        ? "bg-red-500/10 border-[3px] border-red-500/70 text-red-500/70" 
+
+    const cardStyles = isLate
+        ? "bg-red-500/10 border-[3px] border-red-500/70 text-red-500/70"
         : "bg-orange-500/10 border border-orange-500/70 text-orange-500/70";
 
     const itemBorder = isLate ? "border-red-500/70 hover:bg-red-500/5" : "border-orange-500/70 hover:bg-orange-500/5";
@@ -51,7 +50,7 @@ const PaymentsListCard: React.FC<PaymentsListCardProps> = ({ type, title, icon, 
                             <ClockIcon size={20} />
                             <span>{item.name}</span>
                         </div>
-                        
+
                         <div className="flex justify-between items-center mt-auto gap-1">
                             <span className={`text-sm ${dueDateColor}`}>{item.dueDate}</span>
                             <span className="ml-auto font-bold text-2xl text-white whitespace-nowrap">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { XIcon, UsersIcon, CheckSquareIcon, SquareIcon, MagnifyingGlassIcon, CalendarBlankIcon, CurrencyDollarIcon } from '@phosphor-icons/react';
 import { db } from '../lib/firebase';
 import { collection, getDocs, writeBatch, doc, Timestamp } from 'firebase/firestore';

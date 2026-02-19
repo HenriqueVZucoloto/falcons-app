@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { auth, functions } from '../lib/firebase';
 import Modal from './Modal';
 import { httpsCallable } from 'firebase/functions';

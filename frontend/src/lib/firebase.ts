@@ -1,14 +1,9 @@
-// frontend/src/lib/firebase.ts
-
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, CollectionReference } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
-import type { UserProfile, Payment } from "../types";
 
-// 1. Tipagem das variáveis de ambiente para o Vite + TS
-// Isso ajuda o VS Code a sugerir os nomes das chaves do .env
 interface FirebaseEnv {
   VITE_FIREBASE_API_KEY: string;
   VITE_FIREBASE_AUTH_DOMAIN: string;
@@ -29,19 +24,11 @@ const firebaseConfig = {
   appId: env.VITE_FIREBASE_APP_ID
 };
 
-// 2. Inicialização
 const app = initializeApp(firebaseConfig);
 
-// 3. Exportando os serviços com as mesmas instâncias do legado
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app, 'us-central1');
-
-// 4. Atalhos Tipados (Helper Functions)
-// Isso é o "pulo do gato" no TS: sempre que usarmos essas funções, 
-// o código saberá exatamente quais campos existem em cada documento.
-export const usersCollection = collection(db, "usuarios") as CollectionReference<UserProfile>;
-export const paymentsCollection = collection(db, "pagamentos") as CollectionReference<Payment>;
 
 export default app;

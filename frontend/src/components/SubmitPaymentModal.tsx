@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { UploadSimpleIcon, WalletIcon, PixLogoIcon, CopyIcon } from '@phosphor-icons/react';
 import { generatePixCopyPaste } from '../utils/pix';
 import { FINANCE_CONFIG } from '../config/finance';
@@ -6,15 +6,10 @@ import Modal from './Modal';
 import { storage } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import type { UserProfile } from '../types';
+import type { UserProfile, FormattedPayment } from '../types';
 import { formatCurrency } from '../utils/masks';
 
-interface FormattedPayment {
-    id: string;
-    name: string;
-    amount: string;
-    dueDate: string;
-}
+
 
 interface SubmitPaymentModalProps {
     user: UserProfile;
@@ -33,6 +28,17 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
 
     const valorTotalCobranca = parseFloat(paymentItem.amount.replace('.', '').replace(',', '.'));
     const valorRestantePix = valorTotalCobranca - valorSaldoUtilizado;
+
+    const pixPayload = useMemo(() => {
+        if (valorRestantePix <= 0) return '';
+        return generatePixCopyPaste(
+            FINANCE_CONFIG.PIX_KEY,
+            FINANCE_CONFIG.PIX_MERCHANT_NAME,
+            FINANCE_CONFIG.PIX_MERCHANT_CITY,
+            valorRestantePix,
+            `${FINANCE_CONFIG.PIX_TXID_PREFIX}-PGT-${paymentItem.id.substring(0, 4)}`
+        );
+    }, [valorRestantePix, paymentItem.id]);
 
     const handleStartClose = () => {
         setIsClosing(true);
@@ -166,25 +172,13 @@ const SubmitPaymentModal: React.FC<SubmitPaymentModalProps> = ({ user, paymentIt
                                 <input
                                     type="text"
                                     readOnly
-                                    value={generatePixCopyPaste(
-                                        FINANCE_CONFIG.PIX_KEY,
-                                        FINANCE_CONFIG.PIX_MERCHANT_NAME,
-                                        FINANCE_CONFIG.PIX_MERCHANT_CITY,
-                                        valorRestantePix,
-                                        `${FINANCE_CONFIG.PIX_TXID_PREFIX}-PGT-${paymentItem.id.substring(0, 4)}`
-                                    )}
+                                    value={pixPayload}
                                     className="w-full bg-black/30 border border-[#333] rounded-lg px-3 py-2 text-xs text-[#777] font-mono truncate"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        navigator.clipboard.writeText(generatePixCopyPaste(
-                                            FINANCE_CONFIG.PIX_KEY,
-                                            FINANCE_CONFIG.PIX_MERCHANT_NAME,
-                                            FINANCE_CONFIG.PIX_MERCHANT_CITY,
-                                            valorRestantePix,
-                                            `${FINANCE_CONFIG.PIX_TXID_PREFIX}-PGT-${paymentItem.id.substring(0, 4)}`
-                                        ));
+                                        navigator.clipboard.writeText(pixPayload);
                                         alert("Código PIX copiado!");
                                     }}
                                     className="bg-[#00BFA5] text-[#1A1A1A] p-2 rounded-lg font-bold hover:bg-[#00A08A] transition-colors cursor-pointer"

@@ -26,11 +26,21 @@ service cloud.firestore {
       allow get: if isAdmin() || isOwner(userId);
       allow list: if isAdmin(); 
 
-      allow update: if (isOwner(userId) || isAdmin()) 
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roles', 'email'])
-                    && (
-                      request.resource.data.precisaMudarSenha == resource.data.precisaMudarSenha ||
-                      (resource.data.precisaMudarSenha == true && request.resource.data.precisaMudarSenha == false)
+      // Super Admin: pode tudo
+      // Admin: pode alterar dados de qualquer atleta, exceto 'roles'
+      // Owner (atleta): pode alterar seus dados pessoais, exceto campos restritos
+      allow update: if isSuperAdmin() 
+                    || (
+                      isAdmin()
+                      && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roles'])
+                    )
+                    || (
+                      isOwner(userId)
+                      && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['roles', 'email', 'saldo', 'cpf', 'fotoUrl'])
+                      && (
+                        request.resource.data.precisaMudarSenha == resource.data.precisaMudarSenha ||
+                        (resource.data.precisaMudarSenha == true && request.resource.data.precisaMudarSenha == false)
+                      )
                     );
       
       allow create, delete: if isAdmin();

@@ -7,10 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Node
+node_modules/
+dist/
+dist-ssr/
 
 # Editor directories and files
 .vscode/*
@@ -23,6 +23,24 @@ dist-ssr
 *.sln
 *.sw?
 
+# --- Firebase ---
+.firebase/
+firebase-debug.log*
+ui-debug.log*
+
+# --- Variáveis de Ambiente ---
 .env
+.env.*
+!.env.example
+
+# --- Relatórios e Caches ---
+coverage/
+.eslintcache
+
+# --- Backups temporários ---
+*.bak
+*.orig
+
+# Custom
 legacy_code/
 importante.txt

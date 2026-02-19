@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { db } from '../../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import type { UserProfile } from '../../types';
 import { PlusIcon, MagnifyingGlassIcon } from '@phosphor-icons/react';
 import AddAthleteModal from '../../components/AddAthleteModal';
-import { useMemo } from 'react';
+
 
 const AdminAthletesPage: React.FC = () => {
+    const navigate = useNavigate();
     const [athletes, setAthletes] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,32 +17,33 @@ const AdminAthletesPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<'all' | 'positive' | 'negative'>('all');
 
-    useEffect(() => {
-        const fetchAthletes = async () => {
-            setIsLoading(true);
-            try {
-                const usersCollectionRef = collection(db, "usuarios");
-                const usersSnapshot = await getDocs(usersCollectionRef);
-                const athletesList = usersSnapshot.docs.map(doc => ({
-                    uid: doc.id,
-                    ...doc.data()
-                })) as UserProfile[];
-                setAthletes(athletesList);
-            } catch (error) {
-                console.error("Erro ao buscar atletas: ", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchAthletes();
+    const fetchAthletes = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const usersCollectionRef = collection(db, "usuarios");
+            const usersSnapshot = await getDocs(usersCollectionRef);
+            const athletesList = usersSnapshot.docs.map(doc => ({
+                uid: doc.id,
+                ...doc.data()
+            })) as UserProfile[];
+            setAthletes(athletesList);
+        } catch (error) {
+            console.error("Erro ao buscar atletas: ", error);
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchAthletes();
+    }, [fetchAthletes]);
 
     const filteredAthletes = useMemo(() => {
         return athletes
             .filter(athlete => {
                 const matchesSearch = (athlete.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (athlete.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+                    (athlete.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (athlete.apelido || '').toLowerCase().includes(searchTerm.toLowerCase());
 
                 const matchesFilter = filterType === 'all'
                     ? true
@@ -76,7 +79,7 @@ const AdminAthletesPage: React.FC = () => {
                     <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-[#777]" size={20} />
                     <input
                         type="text"
-                        placeholder="Buscar por nome ou e-mail..."
+                        placeholder="Buscar por nome, apelido ou e-mail..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full bg-[#252525] border border-[#333] pl-12 p-3 rounded-xl text-white outline-none focus:border-[#FFD600] transition-colors"
@@ -115,10 +118,14 @@ const AdminAthletesPage: React.FC = () => {
                             filteredAthletes.map(athlete => (
                                 <div
                                     key={athlete.uid}
-                                    className="flex flex-col md:flex-row justify-between items-start md:items-center w-full bg-[#333] p-4 px-6 rounded-xl border border-[#444] hover:border-[#FFD600] transition-all group gap-4 md:gap-0"
+                                    onClick={() => navigate(`/admin/athletes/${athlete.uid}`)}
+                                    className="flex flex-col md:flex-row justify-between items-start md:items-center w-full bg-[#333] p-4 px-6 rounded-xl border border-[#444] hover:border-[#FFD600] transition-all group gap-4 md:gap-0 cursor-pointer"
                                 >
                                     <div className="flex flex-col text-left">
-                                        <span className="font-semibold text-white text-lg group-hover:text-[#FFD600]">{athlete.nome || 'Sem Nome'}</span>
+                                        <span className="font-semibold text-white text-lg group-hover:text-[#FFD600]">
+                                            {athlete.nome || 'Sem Nome'}
+                                            {athlete.apelido && <span className="text-[#a0a0a0] font-normal text-sm ml-2">({athlete.apelido})</span>}
+                                        </span>
                                         <span className="text-sm text-[#a0a0a0]">{athlete.email || 'Sem E-mail'}</span>
                                     </div>
 
@@ -139,9 +146,8 @@ const AdminAthletesPage: React.FC = () => {
                 <AddAthleteModal
                     onClose={() => setIsModalOpen(false)}
                     onAthleteAdded={() => {
-                        console.log("Atleta cadastrado!");
-                        // Idealmente chamar o fetchAthletes() aqui novamente
-                        window.location.reload();
+                        fetchAthletes();
+                        setIsModalOpen(false);
                     }}
                 />
             )}

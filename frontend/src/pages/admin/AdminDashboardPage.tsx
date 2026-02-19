@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -8,6 +8,26 @@ const AdminDashboardPage: React.FC = () => {
     const [pendingPayments, setPendingPayments] = useState<Payment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const functions = getFunctions();
+
+    const fetchPayments = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const paymentsQuery = query(
+                collection(db, "pagamentos"),
+                where("statusPagamento", "==", "em análise")
+            );
+            const paymentsSnapshot = await getDocs(paymentsQuery);
+            const paymentsList = paymentsSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Payment[];
+            setPendingPayments(paymentsList);
+        } catch (error) {
+            console.error("Erro ao buscar pagamentos: ", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
     const processar = async (pagamentoId: string, acao: 'aprovar' | 'rejeitar') => {
         let motivo = "";
@@ -20,7 +40,7 @@ const AdminDashboardPage: React.FC = () => {
             const proc = httpsCallable(functions, 'processarPagamento');
             await proc({ pagamentoId, acao, motivo });
             alert(`Pagamento ${acao === 'aprovar' ? 'aprovado' : 'rejeitado'} com sucesso!`);
-            window.location.reload(); 
+            fetchPayments();
         } catch (error) {
             console.error(error);
             alert("Erro ao processar pagamento.");
@@ -32,28 +52,8 @@ const AdminDashboardPage: React.FC = () => {
     };
 
     useEffect(() => {
-        const fetchPayments = async () => {
-            setIsLoading(true);
-            try {
-                const paymentsQuery = query(
-                    collection(db, "pagamentos"),
-                    where("statusPagamento", "==", "em análise")
-                );
-                const paymentsSnapshot = await getDocs(paymentsQuery);
-                const paymentsList = paymentsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })) as Payment[];
-                setPendingPayments(paymentsList);
-            } catch (error) {
-                console.error("Erro ao buscar pagamentos: ", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         fetchPayments();
-    }, []);
+    }, [fetchPayments]);
 
     return (
         <div className="flex flex-col gap-6">

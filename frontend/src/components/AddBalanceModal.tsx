@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { UploadSimpleIcon, CopyIcon, QrCodeIcon, WalletIcon } from '@phosphor-icons/react';
 import Modal from './Modal';
 import { storage } from '../lib/firebase';

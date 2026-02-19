@@ -3,21 +3,47 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import falconsLogo from '../assets/falcons-logo.png';
 import { SignOut, Swap } from '@phosphor-icons/react';
-import { NAV_ITEMS } from '../config/navigation';
+import { NAV_ITEMS, type PageType } from '../config/navigation';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // Fix: Derive IconProps from one of the icons since it's not exported directly
 type IconProps = React.ComponentProps<typeof SignOut>;
-import type { PageType } from '../config/navigation';
 import type { UserProfile } from '../types';
 
 interface LayoutProps {
     children: React.ReactNode;
     user: UserProfile;
-    activePage: PageType;
-    onNavigate: (page: PageType) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, user, activePage, onNavigate }) => {
+const Layout: React.FC<LayoutProps> = ({ children, user }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    // Mapeamento simples de Rota -> ID da Página (para destacar no menu)
+    const getActivePageId = (pathname: string): PageType => {
+        if (pathname === '/' || pathname === '/home') return 'home';
+        if (pathname === '/statement') return 'statement';
+        if (pathname === '/profile') return 'profile';
+        if (pathname === '/admin/dashboard') return 'admin_dashboard';
+        if (pathname === '/admin/athletes' || pathname.startsWith('/admin/athletes/')) return 'admin_athletes';
+        if (pathname === '/admin/charges') return 'admin_charges';
+        if (pathname === '/admin/management') return 'admin_management';
+        return 'home';
+    };
+
+    const activePage = getActivePageId(location.pathname);
+
+    const handleNavigate = (pageId: PageType) => {
+        switch (pageId) {
+            case 'home': navigate('/'); break;
+            case 'statement': navigate('/statement'); break;
+            case 'profile': navigate('/profile'); break;
+            case 'admin_dashboard': navigate('/admin/dashboard'); break;
+            case 'admin_athletes': navigate('/admin/athletes'); break;
+            case 'admin_charges': navigate('/admin/charges'); break;
+            case 'admin_management': navigate('/admin/management'); break;
+        }
+    };
 
     const handleLogout = async () => {
         if (window.confirm("Deseja realmente sair?")) {
@@ -46,9 +72,9 @@ const Layout: React.FC<LayoutProps> = ({ children, user, activePage, onNavigate 
     // Função para trocar de modo no mobile
     const handleMobileSwitch = () => {
         if (currentSection === 'athlete') {
-            onNavigate('admin_dashboard'); // Vai para o início do Admin
+            navigate('/admin/dashboard');
         } else {
-            onNavigate('home'); // Vai para o início do Atleta
+            navigate('/');
         }
     };
 
@@ -73,7 +99,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, activePage, onNavigate 
                                     </div>
                                 )}
                                 <button
-                                    onClick={() => onNavigate(item.id)}
+                                    onClick={() => handleNavigate(item.id)}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left group cursor-pointer ${activePage === item.id
                                         ? 'bg-[#FFD600] text-[#1A1A1A] font-bold shadow-[0_0_20px_rgba(255,214,0,0.3)] scale-[1.02]'
                                         : 'text-[#a0a0a0] hover:bg-[#333] hover:text-white hover:pl-5'
@@ -92,11 +118,15 @@ const Layout: React.FC<LayoutProps> = ({ children, user, activePage, onNavigate 
 
                 <div className="p-4 border-t border-falcons-border mt-auto">
                     <div className="flex items-center gap-3 px-4 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-falcons-border flex items-center justify-center text-falcons-gold font-bold text-xs border border-[#444]">
-                            {user.nome?.charAt(0) || 'U'}
-                        </div>
+                        {user.fotoUrl ? (
+                            <img src={user.fotoUrl} alt={user.nome} className="w-8 h-8 rounded-full object-cover border border-[#444]" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-falcons-border flex items-center justify-center text-falcons-gold font-bold text-xs border border-[#444]">
+                                {user.nome?.charAt(0) || 'U'}
+                            </div>
+                        )}
                         <div className="flex flex-col overflow-hidden">
-                            <span className="text-sm font-medium truncate text-white">{user.nome?.split(' ')[0]}</span>
+                            <span className="text-sm font-medium truncate text-white">{user.apelido || user.nome?.split(' ')[0]}</span>
                             <span className="text-[10px] text-[#777] uppercase">{isAdmin ? 'Admin' : 'Atleta'}</span>
                         </div>
                     </div>
@@ -119,7 +149,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, activePage, onNavigate 
                     {mobileItems.map((item) => (
                         <button
                             key={item.id}
-                            onClick={() => onNavigate(item.id)}
+                            onClick={() => handleNavigate(item.id)}
                             className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors cursor-pointer ${activePage === item.id
                                 ? 'text-falcons-gold'
                                 : 'text-falcons-text-secondary active:scale-95 hover:text-white'

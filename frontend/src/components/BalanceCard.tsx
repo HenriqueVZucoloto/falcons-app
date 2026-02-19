@@ -1,4 +1,3 @@
-import React from 'react';
 import { WalletIcon, ClockCounterClockwiseIcon } from '@phosphor-icons/react';
 
 interface BalanceCardProps {
